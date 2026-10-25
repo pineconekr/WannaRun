@@ -135,13 +135,13 @@
   .wr-map-embed {
     position: relative;
     z-index: 0;
-    height: clamp(260px, 39dvh, 360px);
+    height: auto;
     background: #e6ece4;
   }
   
   /* 기존 MapScreen의 크기만 홈 화면 안에서 조정합니다. */
   .wr-map-embed > div {
-    height: 100%;
+    height: auto !important;
     min-height: 0 !important;
     padding: 0 !important;
   }
@@ -150,8 +150,16 @@
     display: none;
   }
   
-  .wr-map-embed > div > div {
-    height: 100% !important;
+  .wr-map-embed > div > div:last-child {
+    height: clamp(260px, 39dvh, 360px) !important;
+  }
+
+  .wr-map-embed > div > div:first-of-type {
+    padding: 12px;
+  }
+
+  .wr-map-embed > div > div:first-of-type > div {
+    flex-wrap: wrap;
   }
   
   .wr-map-caption {

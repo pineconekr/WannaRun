@@ -46,22 +46,22 @@ export default function HomeScreen() {
               >
                 <div className="wr-map-heading">
                   <div>
-                    <span className="wr-tag">추천 출발점</span>
-                    <h2 id="wr-map-heading">센텀 나루공원</h2>
+                    <span className="wr-tag">러닝 지도</span>
+                    <h2 id="wr-map-heading">나의 러닝 경로</h2>
                   </div>
-                  <span className="wr-map-badge">미리보기</span>
+                  <span className="wr-map-badge">경로 확인</span>
                 </div>
 
                 <div
                   className="wr-map-embed"
                   role="region"
-                  aria-label="센텀 나루공원 예시 러닝 경로 지도"
+                  aria-label="러닝 경로 지도"
                 >
                   <MapScreen />
                 </div>
 
                 <p className="wr-map-caption">
-                  표시된 위치와 경로는 시뮬레이션입니다.
+                  위치 권한을 허용해 현재 위치를 확인하거나, 경로를 지정해 데모 이동을 실행해 보세요.
                 </p>
               </section>
 
