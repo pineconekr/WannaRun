@@ -12,6 +12,7 @@ type TerritoryCell = {
 type TerritoryLayerProps = {
   route: Position[];
   hasFinishedRun: boolean;
+  enabled: boolean;
   onTerritoryCountChange: (count: number) => void;
 };
 
@@ -109,7 +110,7 @@ function getCellsAlongRoute(route: Position[]): Record<string, TerritoryCell> {
   return cells;
 }
 
-export default function TerritoryLayer({ route, hasFinishedRun, onTerritoryCountChange }: TerritoryLayerProps) {
+export default function TerritoryLayer({ route, hasFinishedRun, enabled, onTerritoryCountChange }: TerritoryLayerProps) {
   const [territories, setTerritories] = useState<Record<string, TerritoryCell>>({});
   const territoriesRef = useRef<Record<string, TerritoryCell>>({});
   const finishHandledRef = useRef(false);
@@ -142,12 +143,27 @@ export default function TerritoryLayer({ route, hasFinishedRun, onTerritoryCount
   }, [onTerritoryCountChange]);
 
   useEffect(() => {
+    if (enabled) return;
+
+    territoriesRef.current = {};
+    setTerritories({});
+    onTerritoryCountChange(0);
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {
+      // 저장 공간을 사용할 수 없어도 현재 화면의 점령 기록은 초기화합니다.
+    }
+  }, [enabled, onTerritoryCountChange]);
+
+  useEffect(() => {
     if (!hasFinishedRun) {
       finishHandledRef.current = false;
       return;
     }
     if (finishHandledRef.current) return;
     finishHandledRef.current = true;
+    if (!enabled) return;
 
     // 실제 GPS 경로가 지나간 육각형만 점령합니다.
     const newlyVisitedCells = getCellsAlongRoute(route);
@@ -161,11 +177,11 @@ export default function TerritoryLayer({ route, hasFinishedRun, onTerritoryCount
     } catch {
       // 브라우저 저장 공간을 사용할 수 없어도 이번 실행 중에는 지도에 표시합니다.
     }
-  }, [hasFinishedRun, onTerritoryCountChange, route]);
+  }, [enabled, hasFinishedRun, onTerritoryCountChange, route]);
 
   return (
     <>
-      {Object.entries(territories).map(([key, cell]) => (
+      {enabled && Object.entries(territories).map(([key, cell]) => (
         <Polygon
           key={key}
           positions={cell.positions}
