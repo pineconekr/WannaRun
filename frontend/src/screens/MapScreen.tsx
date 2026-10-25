@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import TerritoryLayer from '../components/map/TerritoryLayer';
+import { watchLocation, type LocationPosition } from '../services/location';
 
 // 마커 이미지 깨짐 방지
 const DefaultIcon = L.icon({
@@ -25,7 +26,7 @@ function MapInvalidator() {
   return null;
 }
 
-type Position = [number, number];
+type Position = LocationPosition;
 
 function distanceBetween(start: Position, end: Position) {
   const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
@@ -98,12 +99,13 @@ const MapScreen = () => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [distanceMeters, setDistanceMeters] = useState(0);
   const [territoryCount, setTerritoryCount] = useState(0);
+  const [isTerritoryEnabled, setIsTerritoryEnabled] = useState(true);
   const [customRoute, setCustomRoute] = useState<Position[]>([]);
   const [isSelectingRoute, setIsSelectingRoute] = useState(false);
   const [runStartedAt, setRunStartedAt] = useState<Date | null>(null);
   const [runEndedAt, setRunEndedAt] = useState<Date | null>(null);
   const [locationMessage, setLocationMessage] = useState('러닝을 시작하면 GPS 기록을 시작합니다.');
-  const watchIdRef = useRef<number | null>(null);
+  const stopWatchingLocationRef = useRef<(() => void) | null>(null);
   const simulationIntervalRef = useRef<number | null>(null);
   const startedAtRef = useRef<number | null>(null);
   const elapsedTimeScaleRef = useRef(1);
@@ -155,9 +157,7 @@ const MapScreen = () => {
 
   useEffect(() => {
     return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-      }
+      stopWatchingLocationRef.current?.();
       if (simulationIntervalRef.current !== null) {
         window.clearInterval(simulationIntervalRef.current);
       }
@@ -165,11 +165,7 @@ const MapScreen = () => {
   }, []);
 
   const startRun = () => {
-    if (!navigator.geolocation) {
-      setLocationMessage('이 브라우저에서는 위치 기능을 사용할 수 없습니다.');
-      return;
-    }
-    if (watchIdRef.current !== null || simulationIntervalRef.current !== null || isRunning) return;
+    if (stopWatchingLocationRef.current !== null || simulationIntervalRef.current !== null || isRunning) return;
     setIsSelectingRoute(false);
 
     setPosition(null);
@@ -186,11 +182,10 @@ const MapScreen = () => {
     setRunStartedAt(startTime);
     setLocationMessage('현재 위치를 확인하고 있어요. 브라우저 위치 권한을 허용해 주세요.');
 
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      ({ coords }) => {
-        const nextPosition: Position = [coords.latitude, coords.longitude];
+    const stopWatchingLocation = watchLocation(
+      ({ position: nextPosition, accuracy }) => {
         setPosition(nextPosition);
-        setLocationMessage(`실시간 위치를 표시 중입니다. 정확도 약 ${Math.round(coords.accuracy)}m`);
+        setLocationMessage(`실시간 위치를 표시 중입니다. 정확도 약 ${Math.round(accuracy)}m`);
 
         const previousPosition = lastPointRef.current;
         if (!previousPosition) {
@@ -208,21 +203,20 @@ const MapScreen = () => {
         setDistanceMeters(distanceMetersRef.current);
         setRunningPath((path) => [...path, nextPosition]);
       },
-      (error) => {
-        const messages: Record<number, string> = {
-          1: '위치 권한이 거부되었습니다. 브라우저 사이트 설정에서 위치 권한을 허용해 주세요.',
-          2: '현재 위치를 확인할 수 없습니다. 기기의 위치 서비스를 확인해 주세요.',
-          3: '위치 확인 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.',
-        };
-        setLocationMessage(messages[error.code] ?? '현재 위치를 확인하지 못했습니다.');
-      },
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 },
+      setLocationMessage,
     );
+    if (!stopWatchingLocation) {
+      startedAtRef.current = null;
+      setRunStartedAt(null);
+      return;
+    }
+
+    stopWatchingLocationRef.current = stopWatchingLocation;
     setIsRunning(true);
   };
 
   const startDemoRun = () => {
-    if (isRunning || watchIdRef.current !== null || simulationIntervalRef.current !== null) return;
+    if (isRunning || stopWatchingLocationRef.current !== null || simulationIntervalRef.current !== null) return;
     if (customRoute.length < 2) {
       setLocationMessage('먼저 지도에서 경로를 지정해 주세요. 출발점과 도착점을 포함해 2곳 이상 찍어야 합니다.');
       return;
@@ -297,10 +291,8 @@ const MapScreen = () => {
   };
 
   const stopRun = () => {
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
+    stopWatchingLocationRef.current?.();
+    stopWatchingLocationRef.current = null;
     if (simulationIntervalRef.current !== null) {
       window.clearInterval(simulationIntervalRef.current);
       simulationIntervalRef.current = null;
@@ -355,6 +347,13 @@ const MapScreen = () => {
             <button type="button" onClick={startDemoRun} disabled={isRunning || isSelectingRoute || customRoute.length < 2}>
               데모 이동
             </button>
+            <button
+              type="button"
+              onClick={() => setIsTerritoryEnabled((enabled) => !enabled)}
+              aria-pressed={isTerritoryEnabled}
+            >
+              땅따먹기 {isTerritoryEnabled ? '켜짐' : '꺼짐'}
+            </button>
             <button type="button" onClick={stopRun} disabled={!isRunning}>
               러닝 종료
             </button>
@@ -362,7 +361,7 @@ const MapScreen = () => {
           <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#52616b' }}>
             {isSelectingRoute
               ? `지도에서 출발점부터 길의 굴곡마다 클릭해 경유지를 찍으세요. (${customRoute.length}곳)`
-              : `직접 지정한 경로 ${customRoute.length}곳 · 지나간 육각형 타일만 점령해요.`}
+              : `직접 지정한 경로 ${customRoute.length}곳 · 땅따먹기 ${isTerritoryEnabled ? '켜짐: 지나간 타일을 점령해요.' : '꺼짐: 점령 기록을 초기화하고 멈춰요.'}`}
           </p>
           <div aria-label="러닝 기록" style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             <span>시간 {formatDuration(elapsedSeconds)}</span>
@@ -400,6 +399,7 @@ const MapScreen = () => {
             <TerritoryLayer
               route={runningPath}
               hasFinishedRun={hasFinishedRun}
+              enabled={isTerritoryEnabled}
               onTerritoryCountChange={setTerritoryCount}
             />
             <TileLayer
