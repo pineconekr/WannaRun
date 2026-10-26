@@ -1,0 +1,18 @@
+.wr-account { padding: 28px 24px 40px; }
+.wr-account h1 { margin: 0 0 12px; font-size: 29px; letter-spacing: -1px; }
+.wr-form { margin-top: 30px; }
+.wr-form fieldset { display: flex; flex-direction: column; gap: 12px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.wr-form label { margin-top: 8px; font-size: 14px; font-weight: 700; }
+.wr-form input { width: 100%; min-height: 52px; padding: 13px 15px; border: 1px solid #c8d5cd; border-radius: 13px; background: white; color: #192b24; font: inherit; font-size: 16px; }
+.wr-form input:focus-visible { outline: 3px solid #b4d6c4; border-color: #176b4a; }
+.wr-form small { color: #607267; line-height: 1.6; }
+.wr-form .wr-primary-button { justify-content: center; margin-top: 14px; }
+.wr-home button:disabled { opacity: .6; cursor: wait; }
+.wr-text-button { display: block; min-height: 48px; margin: 18px auto 0; padding: 10px 14px; border: 0; background: transparent; color: #176b4a; text-decoration: underline; }
+.wr-error, .wr-success { padding: 12px; border-radius: 12px; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.wr-error { color: #9b2525; background: #fff0ef; }
+.wr-success { color: #176b4a; background: #e8f4e9; }
+.wr-profile-card { margin-top: 26px; padding: 28px 16px; border: 1px solid #dfe7df; border-radius: 24px; background: white; text-align: center; }
+.wr-profile-card h2 { margin: 15px 0 6px; overflow-wrap: anywhere; }
+.wr-profile-card p { margin: 0 0 20px; color: #607267; overflow-wrap: anywhere; }
+.wr-avatar { display: grid; place-items: center; width: 76px; height: 76px; margin: auto; border-radius: 50%; background: #eaf0e4; color: #176b4a; font-size: 32px; font-weight: 800; }

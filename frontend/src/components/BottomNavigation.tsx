@@ -1,6 +1,6 @@
 import React from "react";
 
-export type NavigationTab = "home" | "run" | "history";
+export type NavigationTab = "home" | "run" | "history" | "profile";
 
 type Props = {
   activeTab: NavigationTab;
@@ -19,6 +19,7 @@ export default function BottomNavigation({
     { id: "home", label: "홈", icon: "⌂" },
     { id: "run", label: "러닝", icon: "▷" },
     { id: "history", label: "기록", icon: "▤" },
+    { id: "profile", label: "프로필", icon: "♙" },
   ];
 
   return (

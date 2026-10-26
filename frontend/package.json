@@ -6,7 +6,8 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "dev:api": "../.venv/bin/python -m uvicorn backend.dev:app --app-dir .. --host 127.0.0.1 --port 8000"
     },
     "dependencies": {
         "@vitejs/plugin-react": "^4.3.4",
