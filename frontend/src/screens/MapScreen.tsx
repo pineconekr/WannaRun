@@ -95,6 +95,7 @@ const MapScreen = () => {
   const [position, setPosition] = useState<Position | null>(null);
   const [runningPath, setRunningPath] = useState<Position[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [isDemoPlayback, setIsDemoPlayback] = useState(false);
   const [hasFinishedRun, setHasFinishedRun] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [distanceMeters, setDistanceMeters] = useState(0);
@@ -166,6 +167,7 @@ const MapScreen = () => {
 
   const startRun = () => {
     if (stopWatchingLocationRef.current !== null || simulationIntervalRef.current !== null || isRunning) return;
+    setIsDemoPlayback(false);
     setIsSelectingRoute(false);
 
     setPosition(null);
@@ -222,6 +224,7 @@ const MapScreen = () => {
       return;
     }
 
+    setIsDemoPlayback(true);
     setIsSelectingRoute(false);
     const demoWaypoints = customRoute;
     const demoPath: Position[] = [demoWaypoints[0]];
@@ -406,10 +409,10 @@ const MapScreen = () => {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {customRoute.length > 1 && (
+            {customRoute.length > 1 && runningPath.length === 0 && !isRunning && (
               <Polyline positions={customRoute} color="#1769ff" weight={4} dashArray="8 8" />
             )}
-            {customRoute.map((point, index) => (
+            {(!isDemoPlayback || hasFinishedRun) && customRoute.map((point, index) => (
               <CircleMarker
                 key={`route-point-${index}`}
                 center={point}
@@ -429,7 +432,9 @@ const MapScreen = () => {
                 현재 위치입니다.
               </Popup>
             </Marker>}
-            {runningPath.length > 1 && <Polyline positions={runningPath} color="red" weight={5} />}
+            {runningPath.length > 1 && (!isDemoPlayback || hasFinishedRun) && (
+              <Polyline positions={runningPath} color="red" weight={5} />
+            )}
           </MapContainer>
         </div>
       </div>
