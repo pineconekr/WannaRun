@@ -17,9 +17,8 @@ class User(Base):
     id: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
-    email: Mapped[str] = mapped_column(String(254), unique=True)
+    username: Mapped[str] = mapped_column(String(20), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    nickname: Mapped[str | None] = mapped_column(String(30), nullable=True)
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False)
 
 

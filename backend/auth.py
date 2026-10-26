@@ -47,7 +47,7 @@ CurrentSession = Annotated[AuthSession, Depends(require_session)]
 @router.post("/signup", response_model=UserResponse, status_code=201)
 def signup(data: SignupRequest, db: Db):
     user = User(
-        email=str(data.email).lower(),
+        username=data.username,
         password_hash=password_hasher.hash(data.password.get_secret_value()),
     )
     db.add(user)
@@ -55,18 +55,18 @@ def signup(data: SignupRequest, db: Db):
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="이미 가입한 이메일") from None
+        raise HTTPException(status_code=409, detail="이미 사용 중인 아이디") from None
     db.refresh(user)
     return user
 
 
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginRequest, db: Db):
-    user = db.scalar(select(User).where(User.email == str(data.email).lower()))
+    user = db.scalar(select(User).where(User.username == data.username))
     if user is None or not password_hasher.verify(
         data.password.get_secret_value(), user.password_hash
     ):
-        raise HTTPException(status_code=401, detail="이메일 또는 비밀번호 확인")
+        raise HTTPException(status_code=401, detail="아이디 또는 비밀번호 확인")
     token = secrets.token_urlsafe(32)
     db.add(AuthSession(
         token_hash=token_digest(token),

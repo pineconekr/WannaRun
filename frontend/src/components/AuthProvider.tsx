@@ -3,9 +3,8 @@ import { ApiError, authRequest, type User } from '../services/auth';
 
 type Auth = {
   user: User | null; loading: boolean; error: string;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  updateNickname: (nickname: string) => Promise<void>;
   retry: () => void;
 };
 const Context = createContext<Auth | null>(null);
@@ -35,9 +34,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [token, attempt]);
-  async function login(email: string, password: string) {
+  async function login(username: string, password: string) {
     const result = await authRequest<{ access_token: string }>('/auth/login', {
-      method: 'POST', body: JSON.stringify({ email, password }),
+      method: 'POST', body: JSON.stringify({ username, password }),
     });
     storeToken(result.access_token); setToken(result.access_token); setError('');
   }
@@ -46,20 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     catch (reason) { if (!(reason instanceof ApiError && reason.status === 401)) throw reason; }
     clear(); setError('');
   }
-  async function updateNickname(nickname: string) {
-    try {
-      const value = await authRequest<User>('/users/me', {
-        method: 'PATCH', body: JSON.stringify({ nickname }),
-      }, token || undefined);
-      setUser(value);
-    } catch (reason) {
-      if (reason instanceof ApiError && reason.status === 401) {
-        clear(); throw new Error('로그인이 만료됐어요. 다시 로그인해 주세요.');
-      }
-      throw reason;
-    }
-  }
-  return <Context.Provider value={{ user, loading, error, login, logout, updateNickname,
+  return <Context.Provider value={{ user, loading, error, login, logout,
     retry: () => setAttempt(value => value + 1) }}>{children}</Context.Provider>;
 }
 export function useAuth() {

@@ -1,7 +1,6 @@
 export type User = {
   id: string;
-  email: string;
-  nickname: string | null;
+  username: string;
   onboarding_completed: boolean;
 };
 
