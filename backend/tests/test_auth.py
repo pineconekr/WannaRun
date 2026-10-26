@@ -1,65 +1,25 @@
 import time
 
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy.pool import StaticPool
 
 from backend.auth import token_digest
-from backend.database import get_db
-from backend.main import app
-from backend.models import AuthSession, Base, User
+from backend.models import AuthSession, User
+from backend.tests.conftest import register_and_login
 
 
-@pytest.fixture
-def api():
-    engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-    )
-    Base.metadata.create_all(engine)
-
-    def test_db():
-        with Session(engine) as session:
-            yield session
-
-    app.dependency_overrides[get_db] = test_db
-    try:
-        with TestClient(app) as client:
-            yield client, engine
-    finally:
-        app.dependency_overrides.clear()
-        engine.dispose()
-
-
-def register_and_login(client, username="runner_01"):
-    account = {"username": username, "password": "test-password-123"}
-    signup = client.post("/api/auth/signup", json=account)
-    assert signup.status_code == 201
-    login = client.post("/api/auth/login", json=account)
-    assert login.status_code == 200
-    token = login.json()["access_token"]
-    return signup.json(), token, {"Authorization": f"Bearer {token}"}
-
-
-def test_account_onboarding_and_logout(api):
+def test_account_and_logout(api):
     client, engine = api
     user, token, headers = register_and_login(client)
     assert user["username"] == "runner_01"
-    assert user["onboarding_completed"] is False
     assert "password" not in user and "password_hash" not in user
     with Session(engine) as db:
         stored = db.get(User, user["id"])
         assert stored.password_hash != "test-password-123"
         assert db.get(AuthSession, token_digest(token)) is not None
         assert db.get(AuthSession, token) is None
-    updated = client.patch(
-        "/api/users/me", headers=headers, json={"onboarding_completed": True}
-    )
-    assert updated.status_code == 200
-    assert client.get("/api/users/me", headers=headers).json() == {
-        **user, "onboarding_completed": True,
-    }
+    assert client.get("/api/users/me", headers=headers).json() == user
     assert client.post("/api/auth/logout", headers=headers).status_code == 204
     assert client.get("/api/users/me", headers=headers).status_code == 401
 
@@ -97,14 +57,7 @@ def test_missing_invalid_expired_token_and_account_isolation(api):
     assert client.get("/api/users/me", headers={
         "Authorization": "Bearer invalid",
     }).status_code == 401
-    for payload in [
-        {"id": second["id"], "onboarding_completed": True},
-        {"username": "taken_name", "onboarding_completed": True},
-    ]:
-        assert client.patch(
-            "/api/users/me", headers=headers, json=payload
-        ).status_code == 422
-    client.patch("/api/users/me", headers=headers, json={"onboarding_completed": True})
+    assert client.get("/api/users/me", headers=headers).json() == first
     assert client.get("/api/users/me", headers=other_headers).json() == second
     with Session(engine) as db:
         session = db.get(AuthSession, token_digest(token))

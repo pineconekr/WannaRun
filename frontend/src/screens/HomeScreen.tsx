@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import ProfileScreen from "./ProfileScreen";
+import HistoryScreen from "./HistoryScreen";
 import MapScreen from "./MapScreen";
 import BottomNavigation from "../components/BottomNavigation";
 import type { NavigationTab } from "../components/BottomNavigation";
@@ -25,7 +26,7 @@ export default function HomeScreen() {
         </header>
 
         <main className="wr-main">
-          {activeTab === "profile" ? <ProfileScreen /> : activeTab === "home" ? (
+          {activeTab === "profile" ? <ProfileScreen /> : activeTab === "history" ? <HistoryScreen /> : activeTab === "home" ? (
             <>
               <section className="wr-intro">
                 <p className="wr-eyebrow">READY TO RUN?</p>

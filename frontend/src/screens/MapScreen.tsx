@@ -5,6 +5,8 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap,
 import L from 'leaflet';
 import TerritoryLayer from '../components/map/TerritoryLayer';
 import { watchLocation, type LocationPosition } from '../services/location';
+import { saveRunningRecord } from '../services/api';
+import { useAuth } from '../components/AuthProvider';
 
 // 마커 이미지 깨짐 방지
 const DefaultIcon = L.icon({
@@ -112,6 +114,12 @@ const MapScreen = () => {
   const elapsedTimeScaleRef = useRef(1);
   const lastPointRef = useRef<Position | null>(null);
   const distanceMetersRef = useRef(0);
+  // 데모 자동 종료는 이전 렌더의 stopRun을 호출하므로 최신 값은 ref로 읽습니다.
+  const runningPathRef = useRef<Position[]>([]);
+  const runStartedAtRef = useRef<Date | null>(null);
+  const { token } = useAuth();
+  runningPathRef.current = runningPath;
+  runStartedAtRef.current = runStartedAt;
 
   useEffect(() => {
     try {
@@ -300,14 +308,31 @@ const MapScreen = () => {
       window.clearInterval(simulationIntervalRef.current);
       simulationIntervalRef.current = null;
     }
+    let finalElapsedSeconds = elapsedSeconds;
     if (startedAtRef.current !== null) {
-      setElapsedSeconds(Math.floor(((Date.now() - startedAtRef.current) / 1000) * elapsedTimeScaleRef.current));
+      finalElapsedSeconds = Math.floor(((Date.now() - startedAtRef.current) / 1000) * elapsedTimeScaleRef.current);
+      setElapsedSeconds(finalElapsedSeconds);
       startedAtRef.current = null;
     }
-    setRunEndedAt(new Date());
+    const endedAt = new Date();
+    setRunEndedAt(endedAt);
     setHasFinishedRun(true);
     setIsRunning(false);
-    setLocationMessage('러닝 기록을 종료했습니다.');
+    const startedAt = runStartedAtRef.current;
+    if (!token || !startedAt) {
+      setLocationMessage('러닝 기록을 종료했습니다. 로그인하면 기록이 저장돼요.');
+      return;
+    }
+    setLocationMessage('러닝 기록을 저장하고 있어요…');
+    saveRunningRecord({
+      started_at: startedAt.toISOString(),
+      ended_at: endedAt.toISOString(),
+      distance_m: distanceMetersRef.current,
+      duration_s: finalElapsedSeconds,
+      path: runningPathRef.current,
+    }, token)
+      .then(() => setLocationMessage('러닝 기록을 저장했어요.'))
+      .catch((reason) => setLocationMessage(reason instanceof Error ? reason.message : '기록을 저장하지 못했어요.'));
   };
 
   const averagePaceSeconds = distanceMeters > 0 ? elapsedSeconds / (distanceMeters / 1000) : null;

@@ -1,7 +1,6 @@
 export type User = {
   id: string;
   username: string;
-  onboarding_completed: boolean;
 };
 
 export class ApiError extends Error {

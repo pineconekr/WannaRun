@@ -1,17 +1,19 @@
 # 담당: 서솔빈
-# FastAPI 앱 생성·API 연결
+# FastAPI 앱 생성·API 연결·프론트 화면 제공
 
 from contextlib import asynccontextmanager
-import os
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from backend.database import engine
 from backend.auth import router as auth_router
+from backend.runs import router as runs_router
 from backend.users import router as users_router
+
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 
 @asynccontextmanager
@@ -22,20 +24,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="WannaRun API", lifespan=lifespan)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        origin.strip()
-        for origin in os.getenv(
-            "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
-        ).split(",")
-        if origin.strip()
-    ],
-    allow_methods=["GET", "POST", "PATCH"],
-    allow_headers=["Authorization", "Content-Type"],
-)
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(runs_router)
 
 
 @app.get("/health")
@@ -56,3 +47,7 @@ def database_health():
             detail="DB 연결 실패",
         ) from None
     return {"status": "ok"}
+
+
+# API 경로가 우선. 나머지 경로는 빌드된 프론트 화면 제공.
+app.frontend("/", directory=FRONTEND_DIST, check_dir=False)

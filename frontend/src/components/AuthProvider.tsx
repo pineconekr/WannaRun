@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ApiError, authRequest, type User } from '../services/auth';
 
 type Auth = {
-  user: User | null; loading: boolean; error: string;
+  user: User | null; token: string | null; loading: boolean; error: string;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   retry: () => void;
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     catch (reason) { if (!(reason instanceof ApiError && reason.status === 401)) throw reason; }
     clear(); setError('');
   }
-  return <Context.Provider value={{ user, loading, error, login, logout,
+  return <Context.Provider value={{ user, token, loading, error, login, logout,
     retry: () => setAttempt(value => value + 1) }}>{children}</Context.Provider>;
 }
 export function useAuth() {

@@ -1,11 +1,11 @@
 # 담당: 서솔빈
-# 내 정보·온보딩
+# 내 정보 조회
 
 from fastapi import APIRouter, HTTPException
 
 from backend.auth import CurrentSession, Db
 from backend.models import User
-from backend.schemas import UserResponse, UserUpdate
+from backend.schemas import UserResponse
 
 router = APIRouter(prefix="/api/users", tags=["사용자"])
 
@@ -20,13 +20,3 @@ def current_user(db: Db, session: CurrentSession) -> User:
 @router.get("/me", response_model=UserResponse)
 def get_me(db: Db, session: CurrentSession):
     return current_user(db, session)
-
-
-@router.patch("/me", response_model=UserResponse)
-def update_me(data: UserUpdate, db: Db, session: CurrentSession):
-    user = current_user(db, session)
-    for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(user, field, value)
-    db.commit()
-    db.refresh(user)
-    return user

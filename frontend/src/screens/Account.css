@@ -16,3 +16,7 @@
 .wr-profile-card h2 { margin: 15px 0 6px; overflow-wrap: anywhere; }
 .wr-profile-card p { margin: 0 0 20px; color: #607267; overflow-wrap: anywhere; }
 .wr-avatar { display: grid; place-items: center; width: 76px; height: 76px; margin: auto; border-radius: 50%; background: #eaf0e4; color: #176b4a; font-size: 32px; font-weight: 800; }
+.wr-run-list { margin: 0; padding: 0; list-style: none; }
+.wr-run-list .wr-profile-card { margin-top: 14px; padding: 18px 16px; text-align: left; }
+.wr-run-list h2 { margin: 0 0 6px; font-size: 17px; }
+.wr-run-list p { margin: 0; }

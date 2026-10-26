@@ -17,6 +17,9 @@ package = false
 [tool.vercel]
 entrypoint = "backend.main:app"
 
+[tool.vercel.scripts]
+build = "npm ci --prefix frontend && npm run build --prefix frontend"
+
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
