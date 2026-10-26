@@ -8,7 +8,7 @@ from backend.database import get_db
 from backend.main import app
 from backend.models import Base
 
-db_path = Path(__file__).with_name("local-dev.sqlite3")
+db_path = Path(__file__).with_name("auth-test.sqlite3")
 engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
 
 

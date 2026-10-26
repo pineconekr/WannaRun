@@ -10,5 +10,5 @@ __pycache__/
 node_modules/
 dist/
 
-# Local development accounts and sessions
-backend/local-dev.sqlite3*
+# Local development databases contain account and session data
+backend/*.sqlite3*
