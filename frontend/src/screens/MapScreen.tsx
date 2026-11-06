@@ -21,9 +21,10 @@ L.Marker.prototype.options.icon = DefaultIcon;
 function MapInvalidator() {
   const map = useMap();
   useEffect(() => {
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
+    const timer = window.setTimeout(() => map.invalidateSize(), 100);
+    const observer = new ResizeObserver(() => map.invalidateSize());
+    observer.observe(map.getContainer());
+    return () => { window.clearTimeout(timer); observer.disconnect(); };
   }, [map]);
   return null;
 }
@@ -91,13 +92,43 @@ function RoutePointPicker({
   return null;
 }
 
-const MapScreen = () => {
+export type RunResult = {
+  id: string; startedAt: string; endedAt: string; durationSeconds: number;
+  distanceMeters: number; source: 'gps' | 'demo'; points: number;
+};
+const MapScreen = ({ onFinish, onServerStatus, preview = false, onPrepare }: { onFinish?: (result: RunResult) => void; onServerStatus?: (message: string) => void; preview?: boolean; onPrepare?: () => void }) => {
   const mapCenter: [number, number] = [35.1688, 129.1258];
   const CUSTOM_ROUTE_STORAGE_KEY = 'wannarun-custom-demo-route-v1';
   const [position, setPosition] = useState<Position | null>(null);
   const [runningPath, setRunningPath] = useState<Position[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [isDemoPlayback, setIsDemoPlayback] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const pausedRef = useRef(false);
+  const pausedAtRef = useRef<number | null>(null);
+  const pausedMsRef = useRef(0);
+  const sourceRef = useRef<'gps' | 'demo'>('gps');
+  const pointsRef = useRef(0);
+  const startDateRef = useRef(new Date());
+  const resetSession = (source: 'gps' | 'demo') => {
+    sourceRef.current = source; pausedRef.current = false; setIsPaused(false);
+    pausedAtRef.current = null; pausedMsRef.current = 0; pointsRef.current = 0;
+    startDateRef.current = new Date();
+  };
+  const togglePause = () => {
+    const now = Date.now();
+    if (pausedRef.current) {
+      pausedMsRef.current += now - (pausedAtRef.current ?? now);
+      pausedAtRef.current = null;
+    } else { pausedAtRef.current = now; }
+    pausedRef.current = !pausedRef.current;
+    setIsPaused(pausedRef.current);
+    setElapsedSeconds(Math.max(0, activeSeconds()));
+    if (sourceRef.current === 'gps') lastPointRef.current = null;
+  };
+  const activeSeconds = () => Math.floor(((pausedAtRef.current ?? Date.now()) -
+    (startedAtRef.current ?? Date.now()) - pausedMsRef.current) / 1000 * elapsedTimeScaleRef.current);
   const [hasFinishedRun, setHasFinishedRun] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [distanceMeters, setDistanceMeters] = useState(0);
@@ -157,7 +188,7 @@ const MapScreen = () => {
 
     const timerId = window.setInterval(() => {
       if (startedAtRef.current !== null) {
-        setElapsedSeconds(Math.floor(((Date.now() - startedAtRef.current) / 1000) * elapsedTimeScaleRef.current));
+        setElapsedSeconds(Math.max(0, activeSeconds()));
       }
     }, 1000);
 
@@ -173,10 +204,18 @@ const MapScreen = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isRunning) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [isRunning]);
+
   const startRun = () => {
     if (stopWatchingLocationRef.current !== null || simulationIntervalRef.current !== null || isRunning) return;
     setIsDemoPlayback(false);
     setIsSelectingRoute(false);
+    resetSession('gps');
 
     setPosition(null);
     setRunningPath([]);
@@ -194,6 +233,8 @@ const MapScreen = () => {
 
     const stopWatchingLocation = watchLocation(
       ({ position: nextPosition, accuracy }) => {
+        if (pausedRef.current) return;
+        pointsRef.current += 1;
         setPosition(nextPosition);
         setLocationMessage(`실시간 위치를 표시 중입니다. 정확도 약 ${Math.round(accuracy)}m`);
 
@@ -234,6 +275,7 @@ const MapScreen = () => {
 
     setIsDemoPlayback(true);
     setIsSelectingRoute(false);
+    resetSession('demo');
     const demoWaypoints = customRoute;
     const demoPath: Position[] = [demoWaypoints[0]];
     for (let index = 1; index < demoWaypoints.length; index += 1) {
@@ -273,6 +315,7 @@ const MapScreen = () => {
 
     let pointIndex = 0;
     const showNextPoint = () => {
+      if (pausedRef.current) return;
       const nextPosition = demoPath[pointIndex];
       if (!nextPosition) {
         if (simulationIntervalRef.current !== null) {
@@ -283,6 +326,7 @@ const MapScreen = () => {
         return;
       }
 
+      pointsRef.current += 1;
       setPosition(nextPosition);
       const previousPosition = lastPointRef.current;
       if (!previousPosition) {
@@ -302,6 +346,10 @@ const MapScreen = () => {
   };
 
   const stopRun = () => {
+    const durationSeconds = Math.max(0, activeSeconds());
+    onFinish?.({ id: crypto.randomUUID(), startedAt: startDateRef.current.toISOString(),
+      endedAt: new Date().toISOString(), durationSeconds, distanceMeters: distanceMetersRef.current,
+      source: sourceRef.current, points: pointsRef.current });
     stopWatchingLocationRef.current?.();
     stopWatchingLocationRef.current = null;
     if (simulationIntervalRef.current !== null) {
@@ -310,7 +358,7 @@ const MapScreen = () => {
     }
     let finalElapsedSeconds = elapsedSeconds;
     if (startedAtRef.current !== null) {
-      finalElapsedSeconds = Math.floor(((Date.now() - startedAtRef.current) / 1000) * elapsedTimeScaleRef.current);
+      finalElapsedSeconds = Math.max(0, activeSeconds());
       setElapsedSeconds(finalElapsedSeconds);
       startedAtRef.current = null;
     }
@@ -318,12 +366,16 @@ const MapScreen = () => {
     setRunEndedAt(endedAt);
     setHasFinishedRun(true);
     setIsRunning(false);
+    pausedRef.current = false; setIsPaused(false); pausedAtRef.current = null;
+    if (sourceRef.current === 'demo') { onServerStatus?.('데모 결과는 서버에 전송하지 않아요. 아래에서 브라우저에 저장할 수 있어요.'); return; }
     const startedAt = runStartedAtRef.current;
     if (!token || !startedAt) {
       setLocationMessage('러닝 기록을 종료했습니다. 로그인하면 기록이 저장돼요.');
+      onServerStatus?.('게스트 기록은 아래에서 브라우저에 저장할 수 있어요.');
       return;
     }
     setLocationMessage('러닝 기록을 저장하고 있어요…');
+    onServerStatus?.('서버에 기록을 저장하고 있어요…');
     saveRunningRecord({
       started_at: startedAt.toISOString(),
       ended_at: endedAt.toISOString(),
@@ -331,11 +383,12 @@ const MapScreen = () => {
       duration_s: finalElapsedSeconds,
       path: runningPathRef.current,
     }, token)
-      .then(() => setLocationMessage('러닝 기록을 저장했어요.'))
-      .catch((reason) => setLocationMessage(reason instanceof Error ? reason.message : '기록을 저장하지 못했어요.'));
+      .then(() => { setLocationMessage('러닝 기록을 저장했어요.'); onServerStatus?.('서버에 기록을 저장했어요. 이름·메모는 아래에서 이 브라우저에 별도로 저장할 수 있어요.'); window.dispatchEvent(new Event('wannarun:records')); })
+      .catch((reason) => { const message = reason instanceof Error ? reason.message : '기록을 저장하지 못했어요.'; setLocationMessage(message); onServerStatus?.(`서버 저장 실패: ${message} 아래에서 브라우저에 저장할 수 있어요.`); });
+    pausedRef.current = false; setIsPaused(false); pausedAtRef.current = null;
   };
 
-  const averagePaceSeconds = distanceMeters > 0 ? elapsedSeconds / (distanceMeters / 1000) : null;
+  const averagePaceSeconds = distanceMeters > 0 && elapsedSeconds > 0 ? elapsedSeconds / (distanceMeters / 1000) : null;
   const averagePace = averagePaceSeconds === null
     ? '--:-- /km'
     : `${Math.floor(averagePaceSeconds / 60)}:${String(Math.floor(averagePaceSeconds % 60)).padStart(2, '0')} /km`;
@@ -351,13 +404,13 @@ const MapScreen = () => {
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
         crossOrigin=""
       />
-      <div style={{ width: '100%', height: '100vh', padding: '20px', boxSizing: 'border-box' }}>
-        <h2 style={{ margin: '0 0 8px' }}>실시간 러닝 경로</h2>
-        <div style={{ marginBottom: '10px' }}>
+      <div className="wr-tracker" style={{ width: '100%', height: 'auto', padding: '16px', boxSizing: 'border-box' }}>
+        <h2 style={{ margin: '0 0 8px' }}>{isRunning ? (isPaused ? '잠시 숨을 고르세요' : '지금, 나의 속도로') : '나의 러닝 경로'}</h2>
+        {preview ? <button className="wr-primary-button" onClick={onPrepare}>러닝 화면에서 경로 확인하기 →</button> : <div style={{ marginBottom: '10px' }}>
           <p role="status" style={{ margin: '0 0 8px', fontSize: '14px' }}>{locationMessage}</p>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
             <button type="button" onClick={startRun} disabled={isRunning}>
-              러닝 시작
+              GPS 러닝 시작
             </button>
             <button
               type="button"
@@ -382,17 +435,22 @@ const MapScreen = () => {
             >
               땅따먹기 {isTerritoryEnabled ? '켜짐' : '꺼짐'}
             </button>
-            <button type="button" onClick={stopRun} disabled={!isRunning}>
+            <button type="button" onClick={togglePause} disabled={!isRunning}>{isPaused ? '계속 달리기' : '일시정지'}</button>
+            <button type="button" onClick={() => setConfirmEnd(true)} disabled={!isRunning}>
               러닝 종료
             </button>
           </div>
+          {confirmEnd && <div className="wr-notice" role="alert">
+            <p>러닝을 종료하고 결과를 확인할까요?</p>
+            <div className="wr-actions"><button onClick={() => setConfirmEnd(false)}>계속 달리기</button><button onClick={() => { setConfirmEnd(false); stopRun(); }}>종료하고 결과 보기</button></div>
+          </div>}
           <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#52616b' }}>
             {isSelectingRoute
               ? `지도에서 출발점부터 길의 굴곡마다 클릭해 경유지를 찍으세요. (${customRoute.length}곳)`
               : `직접 지정한 경로 ${customRoute.length}곳 · 땅따먹기 ${isTerritoryEnabled ? '켜짐: 지나간 타일을 점령해요.' : '꺼짐: 점령 기록을 초기화하고 멈춰요.'}`}
           </p>
           <div aria-label="러닝 기록" style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-            <span>시간 {formatDuration(elapsedSeconds)}</span>
+            <span>활동 시간 <strong>{formatDuration(elapsedSeconds)}</strong></span>
             <span>거리 {(distanceMeters / 1000).toFixed(2)} km</span>
             <span>평균 페이스 {averagePace}</span>
             <span>점령한 영역 {territoryCount}칸</span>
@@ -414,8 +472,8 @@ const MapScreen = () => {
               <p style={{ margin: '4px 0' }}>평균 페이스 {averagePace} · 기록 지점 {runningPath.length}개</p>
             </section>
           )}
-        </div>
-        <div style={{ width: '100%', height: 'calc(100vh - 180px)', marginTop: '10px' }}>
+        </div>}
+        <div style={{ width: '100%', height: '320px', marginTop: '10px' }}>
           <MapContainer
             center={mapCenter}
             zoom={16}

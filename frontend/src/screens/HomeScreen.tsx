@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import RunScreen from "./RunScreen";
+
 import ProfileScreen from "./ProfileScreen";
 import HistoryScreen from "./HistoryScreen";
 import MapScreen from "./MapScreen";
@@ -59,7 +61,7 @@ export default function HomeScreen() {
                   role="region"
                   aria-label="러닝 경로 지도"
                 >
-                  <MapScreen />
+                  <MapScreen preview onPrepare={() => setActiveTab("run")} />
                 </div>
 
                 <p className="wr-map-caption">
@@ -81,31 +83,10 @@ export default function HomeScreen() {
                 </button>
               </section>
             </>
-          ) : (
-            <section className="wr-empty" aria-labelledby="wr-page-title">
-              <span className="wr-empty-icon" aria-hidden="true">
-                {activeTab === "run" ? "▷" : "▤"}
-              </span>
-              <p className="wr-eyebrow">
-                {activeTab === "run" ? "LET’S RUN" : "MY RECORDS"}
-              </p>
-              <h1 id="wr-page-title">
-                {activeTab === "run" ? "러닝 화면 준비 중" : "기록 화면 준비 중"}
-              </h1>
-              <p>
-                {activeTab === "run"
-                  ? "러닝 시작·종료 기능이 이곳에 연결될 예정이에요."
-                  : "저장한 러닝 기록이 이곳에 표시될 예정이에요."}
-              </p>
-              <button
-                className="wr-primary-button"
-                type="button"
-                onClick={() => setActiveTab("home")}
-              >
-                홈으로 돌아가기
-              </button>
-            </section>
-          )}
+          ) : null}
+          <div hidden={activeTab !== "run"}>
+            <RunScreen onHistory={() => setActiveTab("history")} />
+          </div>
         </main>
 
         <BottomNavigation
