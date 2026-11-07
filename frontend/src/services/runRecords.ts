@@ -1,4 +1,4 @@
-import type { RunResult } from '../screens/MapScreen';
+import type { RunResult } from './tracking';
 export type SavedRun = RunResult & { title: string; note: string };
 // Browser records are separated by account; they are never presented as server records.
 export function recordKey(userId?: string) { return `wannarun.records.v1.${userId ?? 'guest'}`; }
@@ -13,7 +13,11 @@ export function readRecords(key: string): SavedRun[] {
     typeof value.endedAt === 'string' && Number.isFinite(Date.parse(value.endedAt)))) {
     throw new Error('저장된 기록을 읽을 수 없어요. 기존 데이터를 보존했어요.');
   }
-  return raw;
+  return raw.map(value => ({
+    ...value,
+    path: Array.isArray(value.path) ? value.path : [],
+    speedSamples: Array.isArray(value.speedSamples) ? value.speedSamples : [],
+  }));
 }
 export function saveRecord(key: string, record: SavedRun) {
   const records = readRecords(key);
@@ -24,7 +28,7 @@ export function duration(seconds: number) {
   return [Math.floor(seconds / 3600), Math.floor(seconds % 3600 / 60), Math.floor(seconds % 60)]
     .map(value => String(value).padStart(2, '0')).join(':');
 }
-export function pace(record: RunResult) {
+export function pace(record: Pick<RunResult, 'distanceMeters' | 'durationSeconds'>) {
   if (record.distanceMeters <= 0 || record.durationSeconds <= 0) return '—';
   const seconds = Math.round(record.durationSeconds / (record.distanceMeters / 1000));
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;

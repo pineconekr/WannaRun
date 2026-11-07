@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WannaRun</string>
+    <string name="title_activity_main">WannaRun</string>
+    <string name="package_name">kr.wannarun.app</string>
+    <string name="custom_url_scheme">kr.wannarun.app</string>
+    <string name="capacitor_background_geolocation_notification_channel_name">러닝 위치 기록</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_tracking</string>
+    <string name="capacitor_background_geolocation_notification_color">#176b4a</string>
+</resources>

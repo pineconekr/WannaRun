@@ -3,9 +3,13 @@ import MapScreen, { type RunResult } from './MapScreen';
 import { useAuth } from '../components/AuthProvider';
 import { recordKey, saveRecord } from '../services/runRecords';
 import { RunStats } from '../components/RunStats';
+import { SpeedChart } from '../components/SpeedChart';
+import { saveRunningRecord } from '../services/api';
+import { nativeTracking } from '../services/location';
+import './RunScreen.css';
 
 export default function RunScreen({ onHistory }: { onHistory: () => void }) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [result, setResult] = useState<RunResult | null>(null);
   const [title, setTitle] = useState('오늘의 러닝');
   const [note, setNote] = useState('');
@@ -24,17 +28,38 @@ export default function RunScreen({ onHistory }: { onHistory: () => void }) {
     setResult(null); setServerStatus(''); setSaved(false); setError(''); setConfirmDiscard(false);
     setTitle('오늘의 러닝'); setNote(''); setSession(value => value + 1);
   }
+  function finishRun(value: RunResult) {
+    setResult(value); setSaved(false);
+    if (value.source === 'demo') {
+      setServerStatus('데모는 서버에 전송하지 않아요. 그래프와 메모는 이 브라우저에 저장할 수 있어요.');
+      return;
+    }
+    if (!token) { setServerStatus('로그인하면 GPS 기록을 서버에 저장할 수 있어요.'); return; }
+    setServerStatus('서버에 GPS 기록을 저장하고 있어요…');
+    // 준수님 DB 작업과 분리: 기존 API 필드만 전송.
+    void saveRunningRecord({
+      started_at: value.startedAt, ended_at: value.endedAt,
+      distance_m: value.distanceMeters, duration_s: value.durationSeconds, path: value.path,
+    }, token).then(stored => {
+      setResult(current => current?.id === value.id ? { ...current, serverId: stored.id } : current);
+      setServerStatus('서버에 GPS 기록을 저장했어요. 속도 그래프·제목·메모는 브라우저에 별도로 저장해요.');
+      window.dispatchEvent(new Event('wannarun:records'));
+    }).catch(reason => {
+      setServerStatus(reason instanceof Error ? `서버 저장 실패: ${reason.message}` : '서버 저장에 실패했어요. 결과를 브라우저에 저장해 주세요.');
+    });
+  }
   return <section className="wr-run-page" aria-labelledby="run-title">
     <p className="wr-eyebrow">YOUR PACE, YOUR RUN</p>
     <h1 id="run-title">{result ? '오늘도 한 걸음 더.' : '나만의 러닝'}</h1>
     <p className="wr-description">{result ? '수고했어요. 오늘의 움직임을 남겨 보세요.' : '기록보다 중요한 건, 오늘의 시작.'}</p>
-    <p className="wr-notice">브라우저가 열린 동안 GPS로 측정해요. 화면 잠금·백그라운드에서는 위치 수집을 보장하지 않아요. 일시정지 시간과 이동은 제외해요.</p>
+    <p className="wr-notice">{nativeTracking ? 'Android 앱은 알림·위치 권한을 허용하면 화면 잠금 중에도 측정해요. 강제 종료는 지원하지 않아요.' : '웹은 화면을 켜고 페이지를 열어 두세요. 화면 잠금 중 측정은 Android 앱에서 사용해 주세요.'} 일시정지 시간과 이동은 제외해요.</p>
     <div hidden={Boolean(result)} className="wr-map-card wr-running-map">
-      <MapScreen key={session} onServerStatus={setServerStatus} onFinish={value => { setResult(value); setSaved(false); }} />
+      <MapScreen key={session} onFinish={finishRun} />
     </div>
     {result && <div className="wr-result">
       <span className="wr-map-badge">{result.source === 'demo' ? '데모 · 환산 시간' : 'GPS 측정'} · 러닝 종료</span>
       <RunStats record={result} />
+      <SpeedChart samples={result.speedSamples} />
       {serverStatus && <p className="wr-notice" role="status">{serverStatus}</p>}
       <p className="wr-description">{new Date(result.startedAt).toLocaleString('ko-KR')} 시작<br />{result.source === 'demo' ? '데모 재생' : '위치 수신'} {result.points}회 · {result.source === 'demo' ? '지정 경로와 환산 시간으로 만든 결과예요.' : result.distanceMeters === 0 ? '이동 거리가 측정되지 않았어요.' : 'GPS 오차가 포함될 수 있어요.'}</p>
       <form className="wr-form" onSubmit={event => {

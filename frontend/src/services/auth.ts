@@ -1,3 +1,10 @@
+import { Capacitor } from '@capacitor/core';
+
+// Android 앱은 자체 WebView origin에서 배포 API로 접속. 웹은 같은 origin의 /api 사용.
+const API_BASE = Capacitor.isNativePlatform()
+  ? (import.meta.env.VITE_API_URL || 'https://wannarun-drab.vercel.app').replace(/\/$/, '')
+  : '';
+
 export type User = {
   id: string;
   username: string;
@@ -10,7 +17,7 @@ export class ApiError extends Error {
 export async function authRequest<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`/api${path}`, {
+    response = await fetch(`${API_BASE}/api${path}`, {
       ...options,
       headers: { 'Content-Type': 'application/json', ...options.headers,
         ...(token ? { Authorization: `Bearer ${token}` } : {}) },

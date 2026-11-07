@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getRunningRecords, type RunRecord } from '../services/api';
 import { useAuth } from '../components/AuthProvider';
 import { RunStats } from '../components/RunStats';
+import { SpeedChart } from '../components/SpeedChart';
 import { readRecords, recordKey, type SavedRun } from '../services/runRecords';
 
 export default function HistoryScreen() {
@@ -56,6 +57,7 @@ export default function HistoryScreen() {
       {shown.map(record => <details className="wr-record-card" key={record.id}>
         <summary><span className="wr-map-badge">{record.source === 'demo' ? '데모' : 'GPS'}</span><strong>{record.title}</strong><span className="wr-muted">{new Date(record.startedAt).toLocaleDateString('ko-KR')} · {(record.distanceMeters / 1000).toFixed(2)} km · 상세 보기</span></summary>
         <RunStats record={record} /><p className="wr-description">시작 {new Date(record.startedAt).toLocaleString('ko-KR')}<br />종료 {new Date(record.endedAt).toLocaleString('ko-KR')}</p>
+        <SpeedChart samples={record.speedSamples ?? []} />
         {record.note && <p className="wr-record-note">{record.note}</p>}
         {record.source === 'demo' && <p className="wr-notice">지정 경로를 재생한 데모예요. 시간은 걷는 속도로 환산했어요.</p>}
       </details>)}

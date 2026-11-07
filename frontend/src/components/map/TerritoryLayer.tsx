@@ -11,6 +11,7 @@ type TerritoryCell = {
 
 type TerritoryLayerProps = {
   route: Position[];
+  segments?: Position[][];
   hasFinishedRun: boolean;
   enabled: boolean;
   onTerritoryCountChange: (count: number) => void;
@@ -110,7 +111,7 @@ function getCellsAlongRoute(route: Position[]): Record<string, TerritoryCell> {
   return cells;
 }
 
-export default function TerritoryLayer({ route, hasFinishedRun, enabled, onTerritoryCountChange }: TerritoryLayerProps) {
+export default function TerritoryLayer({ route, segments, hasFinishedRun, enabled, onTerritoryCountChange }: TerritoryLayerProps) {
   const [territories, setTerritories] = useState<Record<string, TerritoryCell>>({});
   const territoriesRef = useRef<Record<string, TerritoryCell>>({});
   const finishHandledRef = useRef(false);
@@ -166,7 +167,7 @@ export default function TerritoryLayer({ route, hasFinishedRun, enabled, onTerri
     if (!enabled) return;
 
     // 실제 GPS 경로가 지나간 육각형만 점령합니다.
-    const newlyVisitedCells = getCellsAlongRoute(route);
+    const newlyVisitedCells = Object.assign({}, ...(segments ?? [route]).map(getCellsAlongRoute));
     const nextTerritories = { ...territoriesRef.current, ...newlyVisitedCells };
     territoriesRef.current = nextTerritories;
     setTerritories(nextTerritories);
@@ -177,7 +178,7 @@ export default function TerritoryLayer({ route, hasFinishedRun, enabled, onTerri
     } catch {
       // 브라우저 저장 공간을 사용할 수 없어도 이번 실행 중에는 지도에 표시합니다.
     }
-  }, [enabled, hasFinishedRun, onTerritoryCountChange, route]);
+  }, [enabled, hasFinishedRun, onTerritoryCountChange, route, segments]);
 
   return (
     <>
