@@ -1,6 +1,6 @@
 import React from "react";
 
-export type NavigationTab = "home" | "run" | "history" | "profile";
+export type NavigationTab = "home" | "run" | "history" | "leaderboard" | "events" | "profile";
 
 type Props = {
   activeTab: NavigationTab;

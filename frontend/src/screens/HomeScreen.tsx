@@ -3,12 +3,16 @@ import RunScreen from "./RunScreen";
 
 import ProfileScreen from "./ProfileScreen";
 import HistoryScreen from "./HistoryScreen";
+import LeaderboardScreen from "./LeaderboardScreen";
+import BusanEventsScreen from "./BusanEventsScreen";
 import MapScreen from "./MapScreen";
+import { daysUntilEvent, eventDate, getUpcomingBusanEvents } from "../services/busanEvents";
 import BottomNavigation from "../components/BottomNavigation";
 import type { NavigationTab } from "../components/BottomNavigation";
 import "./HomeScreen.css";
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<NavigationTab>("home");
+  const nextBusanEvent = getUpcomingBusanEvents()[0];
 
   return (
     <div className="wr-home">
@@ -28,7 +32,7 @@ export default function HomeScreen() {
         </header>
 
         <main className="wr-main">
-          {activeTab === "profile" ? <ProfileScreen /> : activeTab === "history" ? <HistoryScreen /> : activeTab === "home" ? (
+          {activeTab === "profile" ? <ProfileScreen /> : activeTab === "history" ? <HistoryScreen /> : activeTab === "leaderboard" ? <LeaderboardScreen /> : activeTab === "events" ? <BusanEventsScreen /> : activeTab === "home" ? (
             <>
               <section className="wr-intro">
                 <p className="wr-eyebrow">READY TO RUN?</p>
@@ -43,6 +47,34 @@ export default function HomeScreen() {
                   오늘의 출발점을 확인해 보세요.
                 </p>
               </section>
+
+              <button
+                className="wr-leaderboard-link"
+                type="button"
+                onClick={() => setActiveTab("leaderboard")}
+                aria-label="이번 주 러닝 순위 보기"
+              >
+                <span>친구 · 이번 주 러닝 순위 확인</span>
+                <span aria-hidden="true">›</span>
+              </button>
+
+              {nextBusanEvent && (
+                <button
+                  className="wr-event-highlight"
+                  type="button"
+                  onClick={() => setActiveTab("events")}
+                  aria-label={`${nextBusanEvent.name}, ${daysUntilEvent(nextBusanEvent) === 0 ? '대회 당일' : `D-${daysUntilEvent(nextBusanEvent)}`}. 부산 대회 일정 보기`}
+                >
+                  <span className="wr-event-highlight-copy">
+                    <small>다가오는 부산 대회</small>
+                    <strong>{nextBusanEvent.name}</strong>
+                    <span>{eventDate(nextBusanEvent).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} · {nextBusanEvent.location}</span>
+                  </span>
+                  <strong className="wr-event-dday">
+                    {daysUntilEvent(nextBusanEvent) === 0 ? 'D-Day' : `D-${daysUntilEvent(nextBusanEvent)}`}
+                  </strong>
+                </button>
+              )}
 
               <section
                 className="wr-map-card"

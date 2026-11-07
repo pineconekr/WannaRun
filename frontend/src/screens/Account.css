@@ -16,6 +16,47 @@
 .wr-profile-card h2 { margin: 15px 0 6px; overflow-wrap: anywhere; }
 .wr-profile-card p { margin: 0 0 20px; color: #607267; overflow-wrap: anywhere; }
 .wr-avatar { display: grid; place-items: center; width: 76px; height: 76px; margin: auto; border-radius: 50%; background: #eaf0e4; color: #176b4a; font-size: 32px; font-weight: 800; }
+.wr-profile-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 14px; }
+.wr-profile-stats > div { display: grid; gap: 5px; justify-items: center; padding: 14px 6px; border: 1px solid #e2e9e2; border-radius: 14px; background: #fff; text-align: center; }
+.wr-profile-stats strong { color: #176b4a; font-size: 20px; }
+.wr-profile-stats span { color: #607267; font-size: 10px; }
+.wr-badges { margin-top: 14px; padding: 16px; border: 1px solid #e2e9e2; border-radius: 18px; background: #fff; }
+.wr-badges-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.wr-badges-header h2 { margin: 0; font-size: 16px; }
+.wr-badges-header p { margin: 5px 0 0; color: #607267; font-size: 11px; }
+.wr-badges-header > span { color: #176b4a; font-size: 12px; font-weight: 800; }
+.wr-badge-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 0; padding: 0; list-style: none; }
+.wr-badge-card { display: grid; justify-items: center; gap: 5px; min-width: 0; padding: 12px 6px; border-radius: 14px; text-align: center; }
+.wr-badge-card.is-earned { background: #edf5ec; color: #176b4a; }
+.wr-badge-card.is-locked { background: #f4f6f4; color: #87928a; }
+.wr-badge-icon { font-size: 24px; }
+.wr-badge-card strong { font-size: 12px; }
+.wr-badge-earned-date { color: #607267; font-size: 9px; }
+.wr-badge-card > span:not(.wr-badge-icon) { font-size: 10px; }
+.wr-badge-card small { font-size: 9px; }
+.wr-profile-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin-top: 14px; padding: 4px; border: 1px solid #e2e9e2; border-radius: 13px; background: #fff; }
+.wr-profile-tabs button { min-height: 38px; border: 0; border-radius: 9px; background: transparent; color: #607267; font: inherit; font-size: 13px; font-weight: 700; }
+.wr-profile-tabs button.is-active { background: #176b4a; color: #fff; }
+.wr-attendance { margin-top: 14px; padding: 16px; border: 1px solid #e2e9e2; border-radius: 18px; background: #fff; }
+.wr-attendance-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.wr-attendance-header h2 { margin: 0; font-size: 16px; }
+.wr-attendance-header > div { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.wr-attendance-header button { width: 28px; height: 28px; border: 0; border-radius: 8px; background: #f2f6f1; color: #176b4a; font-size: 20px; line-height: 1; }
+.wr-attendance-header button:disabled { opacity: .35; cursor: default; }
+.wr-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.wr-calendar-weekdays { margin-bottom: 5px; color: #76847b; font-size: 10px; text-align: center; }
+.wr-calendar-weekdays span { padding: 3px 0; }
+.wr-calendar-day { display: grid; place-items: center; aspect-ratio: 1; min-width: 0; border-radius: 6px; color: #52635a; font-size: 10px; }
+.wr-calendar-day.is-empty { background: transparent; }
+.wr-calendar-day.level-0, .wr-calendar-legend .level-0 { background: #edf3ee; }
+.wr-calendar-day.level-1, .wr-calendar-legend .level-1 { background: #b9ddc8; }
+.wr-calendar-day.level-2, .wr-calendar-legend .level-2 { background: #63ad82; color: #fff; }
+.wr-calendar-day.level-3, .wr-calendar-legend .level-3 { background: #176b4a; color: #fff; }
+.wr-calendar-legend { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; margin-top: 11px; color: #76847b; font-size: 9px; }
+.wr-calendar-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.wr-calendar-legend i { width: 10px; height: 10px; border-radius: 3px; }
+.wr-profile-distance { margin: 14px 2px 0; color: #607267; font-size: 12px; text-align: center; }
+.wr-profile-distance strong { color: #192b24; }
 .wr-run-list { margin: 0; padding: 0; list-style: none; }
 .wr-run-list .wr-profile-card { margin-top: 14px; padding: 18px 16px; text-align: left; }
 .wr-run-list h2 { margin: 0 0 6px; font-size: 17px; }

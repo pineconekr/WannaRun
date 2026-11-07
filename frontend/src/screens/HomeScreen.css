@@ -280,6 +280,63 @@
     justify-content: center;
     max-width: 260px;
   }
+
+  .wr-leaderboard-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: -8px 0 18px;
+    padding: 12px 4px;
+    border: 0;
+    border-top: 1px solid #dfe7df;
+    border-bottom: 1px solid #dfe7df;
+    background: transparent;
+    color: var(--wr-text);
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .wr-leaderboard-link span:last-child {
+    color: var(--wr-muted);
+    font-size: 16px;
+  }
+
+  .wr-event-highlight {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    margin: -4px 0 20px;
+    padding: 14px 16px;
+    border: 1px solid #e7dfcb;
+    border-left: 4px solid #e85a2a;
+    border-radius: 16px;
+    background: #fffdf8;
+    color: var(--wr-text);
+    text-align: left;
+  }
+
+  .wr-event-highlight-copy { display: grid; gap: 3px; min-width: 0; }
+  .wr-event-highlight-copy small { color: var(--wr-muted); font-size: 10px; }
+  .wr-event-highlight-copy strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+  .wr-event-highlight-copy > span { overflow: hidden; color: var(--wr-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  .wr-event-dday { flex: 0 0 auto; color: #e85a2a; font-size: 16px; }
+
+  .wr-events > h1 { margin: 0; font-size: 28px; }
+  .wr-event-list { display: grid; gap: 12px; margin: 22px 0; padding: 0; list-style: none; }
+  .wr-event-card { padding: 16px; border: 1px solid #dfe7df; border-radius: 18px; background: #fff; }
+  .wr-event-topline, .wr-event-bottomline { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .wr-event-topline { color: var(--wr-muted); font-size: 11px; }
+  .wr-event-topline span { color: #e85a2a; font-weight: 800; }
+  .wr-event-card h2 { margin: 9px 0 4px; font-size: 17px; }
+  .wr-event-card p { margin: 0 0 12px; color: var(--wr-muted); font-size: 12px; }
+  .wr-event-bottomline { padding: 10px 0; border-top: 1px solid #edf1ed; color: #52635a; font-size: 11px; }
+  .wr-event-card > a { display: inline-block; margin-top: 6px; color: var(--wr-green); font-size: 12px; font-weight: 700; text-decoration: none; }
+  .wr-events-source { color: var(--wr-muted); font-size: 11px; line-height: 1.7; }
+  .wr-events-source a { color: var(--wr-green); }
 /* Shared running UI: forest green, generous tap targets, and mobile safe areas. */
 .wr-home { --wr-border: #dfe7df; --wr-surface: #fff; line-height: 1.5; }
 .wr-home button { touch-action: manipulation; }
