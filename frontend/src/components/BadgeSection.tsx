@@ -1,4 +1,5 @@
 import React from 'react';
+import { Flag, Flame, Footprints, Lock, Medal } from 'lucide-react';
 
 export type BadgeActivity = { startedAt: string; distanceMeters: number };
 
@@ -47,10 +48,10 @@ export default function BadgeSection({ activities }: Props) {
   const fiftyKmDate = getDistanceMilestoneDate(chronologicalActivities, 50_000);
   const weeklyRunsDate = getWeeklyMilestoneDate(chronologicalActivities);
   const badges = [
-    { icon: '🏁', name: '첫 러닝', condition: '러닝 1회 완료', earned: workoutCount >= 1, earnedAt: firstRunDate },
-    { icon: '👟', name: '10km 달성', condition: '누적 거리 10km', earned: totalDistanceKm >= 10, earnedAt: tenKmDate },
-    { icon: '🔥', name: '꾸준한 한 주', condition: '한 주 3회 러닝', earned: Boolean(weeklyRunsDate), earnedAt: weeklyRunsDate },
-    { icon: '🏅', name: '50km 클럽', condition: '누적 거리 50km', earned: totalDistanceKm >= 50, earnedAt: fiftyKmDate },
+    { Icon: Flag, name: '첫 러닝', condition: '러닝 1회 완료', earned: workoutCount >= 1, earnedAt: firstRunDate },
+    { Icon: Footprints, name: '10km 달성', condition: '누적 거리 10km', earned: totalDistanceKm >= 10, earnedAt: tenKmDate },
+    { Icon: Flame, name: '꾸준한 한 주', condition: '한 주 3회 러닝', earned: Boolean(weeklyRunsDate), earnedAt: weeklyRunsDate },
+    { Icon: Medal, name: '50km 클럽', condition: '누적 거리 50km', earned: totalDistanceKm >= 50, earnedAt: fiftyKmDate },
   ];
 
   return (
@@ -65,7 +66,9 @@ export default function BadgeSection({ activities }: Props) {
       <ul className="wr-badge-grid">
         {badges.map((badge) => (
           <li className={`wr-badge-card${badge.earned ? ' is-earned' : ' is-locked'}`} key={badge.name}>
-            <span className="wr-badge-icon" aria-hidden="true">{badge.earned ? badge.icon : '🔒'}</span>
+            <span className="wr-badge-icon" aria-hidden="true">
+              {badge.earned ? <badge.Icon size={20} strokeWidth={1.75} /> : <Lock size={20} strokeWidth={1.75} />}
+            </span>
             <strong>{badge.name}</strong>
             {badge.earnedAt && (
               <time className="wr-badge-earned-date" dateTime={badge.earnedAt}>

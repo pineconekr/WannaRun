@@ -1,0 +1,106 @@
+/* 셸: 헤더 · 영토 HUD · 하단 메뉴 */
+/* 하단 메뉴가 고정 높이를 짐작하지 않고 실제 높이만큼 자리를 차지하도록 세로 플렉스로 쌓습니다. */
+.wr-home .wr-shell { display: flex; flex-direction: column; }
+
+.wr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) 20px 12px;
+}
+
+.wr-logo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--wr-ink);
+  font-family: var(--wr-font-num);
+  font-size: 30px;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  text-decoration: none;
+}
+.wr-logo span { color: var(--wr-green); }
+
+.wr-hud {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 14px 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--wr-claim-tint);
+  font-size: 21px;
+  line-height: 1;
+  transition: transform .15s var(--wr-ease);
+}
+.wr-hud:active { transform: scale(.95); }
+.wr-hud .wr-cells { align-items: center; }
+.wr-hud .wr-cells small { font-size: 13px; }
+.wr-hud-count { display: inline-flex; animation: wr-hud-bump .4s var(--wr-ease); }
+@keyframes wr-hud-bump { 40% { transform: scale(1.14); } }
+
+.wr-main { flex: 1; padding: 8px 20px 28px; }
+
+.wr-bottom-nav {
+  position: sticky;
+  z-index: 2000;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 100%;
+  padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--wr-border);
+  background: var(--wr-surface);
+}
+.wr-nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 58px;
+  border: 0;
+  border-radius: var(--wr-radius-control);
+  background: transparent;
+  color: var(--wr-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: color .15s;
+}
+.wr-nav-icon { width: 24px; height: 24px; transition: transform .25s var(--wr-ease); }
+.wr-nav-item:active .wr-nav-icon { transform: scale(.9); transition-duration: .08s; }
+.wr-nav-item.is-active { color: var(--wr-green); font-weight: 800; }
+.wr-nav-item.is-active .wr-nav-icon { stroke-width: 2.3; }
+.wr-nav-item.is-active:not(:active) .wr-nav-icon { transform: translateY(-1px); }
+
+/* 러닝 중(맥박) 또는 저장하지 않은 결과(정지)를 알리는 귤색 점 */
+.wr-nav-dot {
+  position: absolute;
+  top: 8px;
+  left: calc(50% + 10px);
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--wr-surface);
+  border-radius: 50%;
+  background: var(--wr-claim);
+  box-sizing: content-box;
+}
+.wr-nav-dot.is-live { animation: wr-nav-pulse 1.6s ease-out infinite; }
+@keyframes wr-nav-pulse {
+  0% { box-shadow: 0 0 0 0 rgb(255 106 43 / .55); }
+  70%, 100% { box-shadow: 0 0 0 8px rgb(255 106 43 / 0); }
+}
+
+@media (hover: hover) {
+  .wr-nav-item:hover { background: var(--wr-tint); }
+}
+@media (max-width: 360px) {
+  .wr-main { padding-inline: 16px; }
+  .wr-header { padding-inline: 16px; }
+}

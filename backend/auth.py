@@ -36,7 +36,7 @@ def require_session(db: Db, credentials: Credentials) -> AuthSession:
             return session
     raise HTTPException(
         status_code=401,
-        detail="로그인 필요",
+        detail="로그인이 필요해요. 다시 로그인해 주세요.",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -55,7 +55,7 @@ def signup(data: SignupRequest, db: Db):
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="이미 사용 중인 아이디") from None
+        raise HTTPException(status_code=409, detail="이미 쓰고 있는 아이디예요. 다른 아이디를 입력해 주세요.") from None
     db.refresh(user)
     return user
 
@@ -66,7 +66,7 @@ def login(data: LoginRequest, db: Db):
     if user is None or not password_hasher.verify(
         data.password.get_secret_value(), user.password_hash
     ):
-        raise HTTPException(status_code=401, detail="아이디 또는 비밀번호 확인")
+        raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 맞지 않아요.")
     token = secrets.token_urlsafe(32)
     db.add(AuthSession(
         token_hash=token_digest(token),

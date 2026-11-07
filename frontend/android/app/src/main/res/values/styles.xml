@@ -9,10 +9,13 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <!-- 앱 배경(--wr-canvas)과 같은 밝은 상태 표시줄에 어두운 아이콘. 다크 모드에서도 웹 화면과 어긋나지 않게 Light 고정. -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <item name="android:statusBarColor">#f4f5ef</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
 

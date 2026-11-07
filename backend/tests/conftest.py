@@ -6,7 +6,7 @@ from sqlalchemy.pool import StaticPool
 
 from backend.database import get_db
 from backend.main import app
-from backend.models import Base
+from backend.migrate import migrate
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def api():
     engine = create_engine(
         "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
-    Base.metadata.create_all(engine)
+    migrate(engine)
 
     def test_db():
         with Session(engine) as session:

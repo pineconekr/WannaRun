@@ -1,0 +1,147 @@
+/* 러닝: 지도 · 준비 · 데모 · 달리는 중 계기판 */
+.wr-running-map { margin-top: 16px; }
+.wr-map-card { position: relative; overflow: hidden; border-radius: var(--wr-radius); background: var(--wr-map-ground); }
+.wr-tracker-map { width: 100%; height: clamp(280px, 44dvh, 400px); isolation: isolate; }
+.wr-map-toggle {
+  position: absolute;
+  z-index: 1000;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 14px 8px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--wr-surface);
+  box-shadow: var(--wr-float);
+  color: var(--wr-muted);
+  font-size: 14px;
+  font-weight: 700;
+  transition: transform .15s var(--wr-ease), background-color .15s;
+}
+.wr-map-toggle:active { transform: scale(.95); background: var(--wr-sunk); transition-duration: .08s; }
+.wr-map-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.wr-map-toggle[aria-pressed="true"] { color: var(--wr-claim-ink); }
+.wr-map-toggle[aria-pressed="true"] svg { fill: var(--wr-claim); stroke: var(--wr-claim); }
+.wr-map-undo { right: auto; left: 12px; color: var(--wr-ink); }
+.wr-map-undo:disabled { color: var(--wr-muted); transform: none; background: var(--wr-surface); }
+.wr-accuracy { fill: var(--wr-green); fill-opacity: .12; stroke: var(--wr-green); stroke-opacity: .35; stroke-width: 1; }
+.wr-waypoint.is-start { fill: var(--wr-green); }
+
+.wr-status { margin: 16px 0 0; color: var(--wr-muted); font-size: 14px; }
+.wr-tracker > .wr-start-button { margin-top: 12px; }
+
+.wr-demo { margin-top: 24px; border-top: 1px solid var(--wr-border); }
+.wr-demo summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  color: var(--wr-ink);
+  font-size: 15px;
+  font-weight: 700;
+  list-style: none;
+  transition: background-color .15s;
+}
+.wr-demo summary:active { background: var(--wr-sunk); }
+.wr-demo summary::-webkit-details-marker { display: none; }
+.wr-demo summary::after {
+  content: "";
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border-right: 2px solid var(--wr-muted);
+  border-bottom: 2px solid var(--wr-muted);
+  transform: rotate(45deg) translateY(-3px);
+  transition: transform .25s var(--wr-ease);
+}
+.wr-demo[open] summary::after { transform: rotate(-135deg) translateY(-3px); }
+.wr-demo > .wr-muted { margin: 0 0 12px; }
+.wr-demo-hint { margin: 0 0 12px; padding: 10px 14px; border-radius: var(--wr-radius-control); background: var(--wr-tint); color: var(--wr-green); font-size: 14px; font-weight: 600; }
+.wr-secondary-button[aria-pressed="true"] { border-color: var(--wr-green); background: var(--wr-tint); }
+
+.wr-footnote { margin: 24px 0 0; color: var(--wr-muted); font-size: 13px; line-height: 1.55; }
+
+/* 달리는 중: 팔 길이에서 읽히는 어두운 계기판 */
+.wr-live {
+  margin-bottom: 12px;
+  padding: 18px 20px 20px;
+  border-radius: var(--wr-radius);
+  background: var(--wr-night);
+  color: var(--wr-night-text);
+  --wr-focus: #fff;
+}
+.wr-live-status { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: 700; }
+.wr-live-dot { position: relative; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--wr-claim); animation: wr-pulse 1.6s ease-in-out infinite; }
+.wr-live.is-paused .wr-live-dot { background: var(--wr-night-muted); animation: none; }
+@keyframes wr-pulse { 50% { opacity: .35; } }
+/* 첫 위치를 기다리는 동안: 퍼지는 고리. 신호가 끊기면 속이 빈 점. */
+.wr-live.is-searching .wr-live-dot { background: var(--wr-night-muted); animation: none; }
+.wr-live.is-searching .wr-live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--wr-night-muted);
+  border-radius: 50%;
+  animation: wr-ping 1.4s cubic-bezier(0, 0, .2, 1) infinite;
+}
+@keyframes wr-ping { to { transform: scale(2.4); opacity: 0; } }
+.wr-live.is-stale .wr-live-dot { background: transparent; box-shadow: inset 0 0 0 2px var(--wr-claim); animation: none; }
+.wr-live-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 12px; margin: 12px 0 0; }
+.wr-live-stats > div { min-width: 0; }
+.wr-live-stats dt { color: var(--wr-night-muted); font-size: 13px; }
+.wr-live-stats dd {
+  margin: 0;
+  font-family: var(--wr-font-num);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: opacity .2s;
+}
+/* 일시정지: 숫자는 흐리게, 시간만 깜빡여 멈춘 상태를 알립니다. */
+.wr-live.is-paused .wr-live-stats dd { opacity: .5; }
+.wr-live.is-paused .wr-live-stats > div:nth-child(2) dd { opacity: 1; animation: wr-blink 1.2s steps(1, end) infinite; }
+@keyframes wr-blink { 50% { opacity: .35; } }
+.wr-live-stats small { margin-left: 3px; color: var(--wr-night-muted); font-family: var(--wr-font); font-size: 13px; font-weight: 600; }
+.wr-live-distance { grid-column: 1 / -1; }
+.wr-live-distance dd { font-size: clamp(76px, 24vw, 96px); line-height: .95; letter-spacing: -.01em; }
+.wr-live-distance small { font-size: 20px; }
+.wr-live-claim dd { color: var(--wr-claim); }
+.wr-live-claim dd.is-zero { color: var(--wr-night-muted); }
+.wr-live-claim dd.is-up { transform-origin: 0 80%; animation: wr-tick .32s var(--wr-ease); }
+@keyframes wr-tick { from { transform: scale(1.22); } }
+/* 이번 주 다음 순위까지: 영토가 아니라 남과의 거리라 귤색을 쓰지 않습니다. */
+.wr-chase { margin-top: 18px; }
+.wr-chase-label { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0; font-size: 15px; font-weight: 700; }
+.wr-chase-label small { flex: none; color: var(--wr-night-muted); font-size: 12px; font-weight: 600; }
+.wr-chase-track { height: 4px; margin-top: 8px; overflow: hidden; border-radius: 2px; background: rgb(241 245 239 / .16); }
+.wr-chase-track span { display: block; height: 100%; background: var(--wr-night-text); transform-origin: left; transition: transform .6s var(--wr-ease); }
+.wr-live-hint { margin: 14px 0 0; font-size: 13px; font-weight: 600; }
+.wr-live-message { margin: 14px 0 16px; color: var(--wr-night-muted); font-size: 13px; }
+.wr-live-hint + .wr-live-message { margin-top: 4px; }
+.wr-live .wr-primary-button { background: var(--wr-night-text); color: var(--wr-night); }
+.wr-live .wr-primary-button:enabled:active { background: #d5ddd4; }
+.wr-live .wr-secondary-button { border-color: rgb(241 245 239 / .28); background: transparent; color: var(--wr-night-text); }
+.wr-live .wr-secondary-button:enabled:active { background: var(--wr-night-raise); }
+.wr-live-confirm { padding: 14px; border-radius: var(--wr-radius-control); background: var(--wr-night-raise); }
+.wr-live-confirm p { margin: 0 0 12px; font-weight: 600; line-height: 1.5; }
+.wr-live-confirm .wr-secondary-button { border-color: rgb(241 245 239 / .4); }
+.wr-live-confirm .wr-secondary-button:enabled:active { background: var(--wr-night); }
+
+@media (hover: hover) {
+  .wr-live .wr-secondary-button:enabled:hover { background: var(--wr-night-raise); }
+}
+@media (max-width: 360px) {
+  .wr-live-stats { gap: 16px 8px; }
+  .wr-live-stats > :not(.wr-live-distance) dd { font-size: 25px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wr-live-dot, .wr-live-dot::after, .wr-live-claim dd.is-up { animation: none; }
+  .wr-live.is-searching .wr-live-dot::after { opacity: .6; }
+  .wr-live.is-paused .wr-live-stats > div:nth-child(2) dd { animation: none; }
+  .wr-map-toggle:active { transform: none; }
+}

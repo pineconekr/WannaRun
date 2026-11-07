@@ -41,12 +41,15 @@ def test_username_is_case_insensitive(api):
 def test_wrong_password_and_unknown_username(api):
     client, _ = api
     register_and_login(client)
+    details = set()
     for username in ["runner_01", "missing_user"]:
         response = client.post("/api/auth/login", json={
             "username": username, "password": "wrong-password",
         })
         assert response.status_code == 401
-        assert response.json() == {"detail": "아이디 또는 비밀번호 확인"}
+        details.add(response.json()["detail"])
+    # 없는 아이디와 틀린 비밀번호를 구분해 알려주지 않습니다.
+    assert len(details) == 1
 
 
 def test_missing_invalid_expired_token_and_account_isolation(api):

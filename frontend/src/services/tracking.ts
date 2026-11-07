@@ -15,6 +15,12 @@ export function distanceBetween(a: LocationPosition, b: LocationPosition): numbe
   return 6371000 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(Math.max(0, 1 - x)));
 }
 
+/** 이보다 오차가 큰 위치는 기록하지 않습니다. */
+export const MAX_ACCURACY_M = 50;
+// 연속한 두 위치가 이보다 빠르거나 오래 떨어져 있으면 튄 값·끊김으로 보고 선을 잇지 않습니다.
+const MAX_SPEED_MPS = 10;
+const MAX_GAP_S = 30;
+
 // 데모 경로를 약 stepMeters 간격으로 필요할 때마다 생성. 긴 경로도 전체 점 배열을 미리 만들지 않음.
 export function createRoutePlayer(route: LocationPosition[], stepMeters = 15): () => LocationPosition | null {
   let started = false;
@@ -36,6 +42,7 @@ export function createRoutePlayer(route: LocationPosition[], stepMeters = 15): (
 }
 
 // 타이머 호출 횟수가 아니라 위치 측정 시각과 실제 경과 시간으로 계산.
+// GPS 러닝은 시작을 누른 때가 아니라 첫 위치가 잡힌 때부터 시간을 잽니다.
 export class RunningSession {
   id = crypto.randomUUID();
   phase: RunPhase = 'running';
@@ -59,7 +66,11 @@ export class RunningSession {
     this.started = started;
   }
 
+  /** GPS 러닝이 아직 첫 위치를 기다리는 중. 이때는 시간이 흐르지 않습니다. */
+  get waiting() { return this.source === 'gps' && this.points === 0; }
+
   elapsed(now = Date.now()) {
+    if (this.waiting) return 0;
     return Math.max(0, ((this.ended ?? this.pausedAt ?? now) - this.started - this.pausedMs) / 1000);
   }
 
@@ -83,21 +94,27 @@ export class RunningSession {
 
   ingest(update: LocationUpdate): boolean {
     if (this.phase !== 'running' || update.timestamp <= this.lastTimestamp || update.timestamp < this.started ||
-        !Number.isFinite(update.timestamp) || !Number.isFinite(update.accuracy) || update.accuracy < 0 || update.accuracy > 50 ||
+        !Number.isFinite(update.timestamp) || !Number.isFinite(update.accuracy) || update.accuracy < 0 || update.accuracy > MAX_ACCURACY_M ||
         !update.position.every(Number.isFinite) || Math.abs(update.position[0]) > 90 || Math.abs(update.position[1]) > 180) return false;
+    if (this.waiting) {
+      // 첫 위치 전의 일시정지는 시작 전이므로 계산에서 뺍니다.
+      this.started = update.timestamp;
+      this.pausedMs = 0;
+    }
     this.lastTimestamp = update.timestamp;
     this.points += 1;
     const previous = this.previous;
     this.previous = update;
-    if (!previous) {
+    const segment = previous ? distanceBetween(previous.position, update.position) : 0;
+    const dt = previous ? (update.timestamp - previous.timestamp) / 1000 : 0;
+    if (!previous || dt > MAX_GAP_S || segment / dt > MAX_SPEED_MPS) {
+      // 처음이거나 튄 위치: 거리·속도 기록 없이 새 구간을 시작합니다.
       this.path.push(update.position);
       this.pathSegments.push([update.position]);
       this.distanceAnchor = update.position;
       this.speed = 0;
       return true;
     }
-    const segment = distanceBetween(previous.position, update.position);
-    const dt = (update.timestamp - previous.timestamp) / 1000;
     this.speed = update.speed !== null && Number.isFinite(update.speed) && update.speed >= 0
       ? update.speed : segment / dt;
     // 작은 이동도 누적하되 3m 이상 진행한 때만 경로·거리에 반영.

@@ -1,0 +1,59 @@
+/* 러닝 결과 · 기록 수치 · 속도 그래프 */
+.wr-result { margin-top: 16px; }
+.wr-result > .wr-secondary-button { margin-top: 12px; }
+.wr-claim-map { height: clamp(240px, 38dvh, 340px); }
+.wr-claim-copy { margin: 16px 0 24px; }
+.wr-claim-copy h2 { margin: 0; font-size: 22px; font-weight: 800; line-height: 1.2; letter-spacing: -.02em; }
+.wr-claim-copy h2 .wr-claim-count { display: flex; margin-bottom: 4px; font-size: 64px; line-height: .95; letter-spacing: 0; }
+.wr-claim-copy h2 .wr-claim-count svg { width: .5em; height: .5em; }
+.wr-claim-copy p .wr-cells { font-size: 17px; }
+.wr-claim-copy .wr-best-chip { display: inline-block; margin-top: 12px; padding: 6px 12px; border-radius: 999px; background: var(--wr-claim-tint); color: var(--wr-claim-ink); font-size: 14px; font-weight: 700; }
+.wr-claim > .wr-error { margin-bottom: 16px; }
+.wr-rank-impact { margin: 12px 0 0; color: var(--wr-green); font-size: 15px; font-weight: 700; }
+.wr-success .wr-cells { font-size: 1em; }
+
+/* 결과 지도: 타일이 그려질 때까지 등장 모션을 멈춰 두고, 경로를 그린 뒤 칸이 따라 드러납니다. */
+.wr-territory-map:not([data-ready]) .wr-hex.is-new,
+.wr-territory-map:not([data-ready]) .wr-route.is-draw { animation-play-state: paused; }
+.wr-route.is-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: wr-route-draw .75s cubic-bezier(.25, 1, .5, 1) forwards; }
+@keyframes wr-route-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .wr-route.is-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+}
+.wr-claim-copy p { margin: 6px 0 0; color: var(--wr-muted); font-size: 15px; }
+.wr-result .wr-form { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--wr-border); }
+.wr-result .wr-success + .wr-primary-button { margin-top: 12px; }
+
+.wr-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 12px; margin: 20px 0; }
+.wr-stats > div { min-width: 0; }
+.wr-stats dt { color: var(--wr-muted); font-size: 13px; }
+.wr-stats dd {
+  margin: 2px 0 0;
+  font-family: var(--wr-font-num);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.wr-stats small { margin-left: 2px; color: var(--wr-muted); font-family: var(--wr-font); font-size: 13px; font-weight: 600; }
+.wr-stat-distance { grid-column: 1 / -1; }
+.wr-stat-distance dd { font-size: 44px; line-height: 1; }
+.wr-stat-distance small { font-size: 18px; }
+
+.wr-speed-chart { margin: 24px 0 0; padding-top: 20px; border-top: 1px solid var(--wr-border); }
+.wr-speed-chart figcaption { font-size: 15px; font-weight: 700; }
+.wr-speed-chart svg { display: block; width: 100%; height: auto; margin-top: 12px; overflow: visible; }
+.wr-speed-chart svg text { fill: var(--wr-muted); font-family: var(--wr-font); font-size: 13px; }
+.wr-speed-chart svg .wr-chart-num { font-family: var(--wr-font-num); font-variant-numeric: tabular-nums; }
+.wr-chart-grid { stroke: var(--wr-border); stroke-width: 1; }
+.wr-chart-axis { fill: none; stroke: var(--wr-axis); stroke-width: 1; }
+.wr-chart-area { fill: var(--wr-green); fill-opacity: .12; }
+.wr-chart-line { fill: none; stroke: var(--wr-green); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.wr-chart-point { fill: var(--wr-green); }
+.wr-speed-chart > .wr-muted { margin: 8px 0 0; }
+
+@media (max-width: 360px) {
+  .wr-stats { gap: 16px 8px; }
+  .wr-stats > :not(.wr-stat-distance) dd { font-size: 25px; }
+  .wr-stat-distance dd { font-size: 40px; }
+}

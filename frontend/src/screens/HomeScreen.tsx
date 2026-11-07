@@ -1,25 +1,75 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import RunScreen from "./RunScreen";
 
 import ProfileScreen from "./ProfileScreen";
 import HistoryScreen from "./HistoryScreen";
 import LeaderboardScreen from "./LeaderboardScreen";
 import BusanEventsScreen from "./BusanEventsScreen";
-import MapScreen from "./MapScreen";
-import RecommendedCourses from "../components/RecommendedCourses";
-import { daysUntilEvent, eventDate, getUpcomingBusanEvents } from "../services/busanEvents";
+
 import BottomNavigation from "../components/BottomNavigation";
 import type { NavigationTab } from "../components/BottomNavigation";
-import "./HomeScreen.css";
+import { CellCount } from "../components/ui";
+import HomeTab, { type RunStatus } from "./HomeTab";
+import { useTerritory } from "../services/territory";
+
+const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** 저장된 칸 수가 늘면 이전 값에서 세어 올라갑니다. 줄거나 모션 감소 설정이면 바로 바꿉니다. */
+function useCountUp(target: number) {
+  const [shown, setShown] = useState(target);
+  const from = useRef(target);
+  useEffect(() => {
+    const start = from.current;
+    from.current = target;
+    if (target <= start || reducedMotion()) { setShown(target); return; }
+    const began = performance.now();
+    let frame = requestAnimationFrame(function step(now) {
+      const t = Math.min(1, (now - began) / 700);
+      setShown(Math.round(start + (target - start) * (1 - (1 - t) ** 3)));
+      if (t < 1) frame = requestAnimationFrame(step);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [target]);
+  return shown;
+}
+
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<NavigationTab>("home");
-  // 러닝 화면은 처음 열 때 만들고, 이후에는 다른 탭에서도 측정이 이어지도록 유지.
+  // 처음 연 뒤에는 다른 탭으로 옮겨도 러닝 측정을 유지합니다.
   const [runMounted, setRunMounted] = useState(false);
-  if (activeTab === "run" && !runMounted) setRunMounted(true);
-  const nextBusanEvent = getUpcomingBusanEvents()[0];
+  const [runStatus, setRunStatus] = useState<RunStatus>("ready");
+  // 홈의 시작 버튼이 누를 때마다 올리는 번호. 러닝 화면이 바뀐 번호를 보면 측정을 시작합니다.
+  const [startRequest, setStartRequest] = useState(0);
+  const [liveClaim, setLiveClaim] = useState(0);
+  const territory = useTerritory();
+  const stored = useCountUp(Object.keys(territory).length);
+  const hudCount = stored + (runStatus === "active" ? liveClaim : 0);
+  const scroller = useRef<HTMLDivElement>(null);
+  const territorySection = useRef<HTMLElement>(null);
+  const [scrollToTerritory, setScrollToTerritory] = useState(false);
+
+  useEffect(() => { if (runStatus !== "active") setLiveClaim(0); }, [runStatus]);
+  useEffect(() => { if (activeTab === "run") setRunMounted(true); }, [activeTab]);
+
+  // 탭을 바꾸면 새 화면은 맨 위부터 보입니다.
+  useEffect(() => {
+    scroller.current?.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (!scrollToTerritory || activeTab !== "home") return;
+    setScrollToTerritory(false);
+    territorySection.current?.scrollIntoView({ block: "start", behavior: reducedMotion() ? "auto" : "smooth" });
+  }, [scrollToTerritory, activeTab]);
+
+  function startFromHome() {
+    setActiveTab("run");
+    if (runStatus === "ready") setStartRequest(value => value + 1);
+  }
 
   return (
-    <div className="wr-home">
+    <div className="wr-home" ref={scroller}>
       <div className="wr-shell">
         <header className="wr-header">
           <a
@@ -32,102 +82,27 @@ export default function HomeScreen() {
           >
             Wanna<span>Run</span>
           </a>
-          <span className="wr-header-label">오늘도 나답게 달리기</span>
+          <button type="button" className="wr-hud" onClick={() => { setActiveTab("home"); setScrollToTerritory(true); }}>
+            <span className="wr-sr">내 영토 보기: </span>
+            <span key={hudCount} className="wr-hud-count"><CellCount value={hudCount} /></span>
+          </button>
         </header>
 
         <main className="wr-main">
-          {activeTab === "profile" ? <ProfileScreen /> : activeTab === "history" ? <HistoryScreen /> : activeTab === "leaderboard" ? <LeaderboardScreen /> : activeTab === "events" ? <BusanEventsScreen /> : activeTab === "home" ? (
-            <>
-              <section className="wr-intro">
-                <p className="wr-eyebrow">READY TO RUN?</p>
-                <h1>
-                  오늘도
-                  <br />
-                  달려볼까요?
-                </h1>
-                <p className="wr-description">
-                  가볍게 시작하는 나만의 러닝.
-                  <br />
-                  오늘의 출발점을 확인해 보세요.
-                </p>
-              </section>
-
-              <button
-                className="wr-leaderboard-link"
-                type="button"
-                onClick={() => setActiveTab("leaderboard")}
-              >
-                <span>친구 · 이번 주 러닝 순위 확인</span>
-                <span aria-hidden="true">›</span>
-              </button>
-
-              {nextBusanEvent && (
-                <button
-                  className="wr-event-highlight"
-                  type="button"
-                  onClick={() => setActiveTab("events")}
-                  aria-label={`${nextBusanEvent.name}, ${daysUntilEvent(nextBusanEvent) === 0 ? '대회 당일' : `D-${daysUntilEvent(nextBusanEvent)}`}. 부산 대회 일정 보기`}
-                >
-                  <span className="wr-event-highlight-copy">
-                    <small>다가오는 부산 대회</small>
-                    <strong>{nextBusanEvent.name}</strong>
-                    <span>{eventDate(nextBusanEvent).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} · {nextBusanEvent.location}</span>
-                  </span>
-                  <strong className="wr-event-dday">
-                    {daysUntilEvent(nextBusanEvent) === 0 ? 'D-Day' : `D-${daysUntilEvent(nextBusanEvent)}`}
-                  </strong>
-                </button>
-              )}
-
-              <section
-                className="wr-map-card"
-                aria-labelledby="wr-map-heading"
-              >
-                <div className="wr-map-heading">
-                  <div>
-                    <span className="wr-tag">러닝 지도</span>
-                    <h2 id="wr-map-heading">나의 러닝 경로</h2>
-                  </div>
-                  <span className="wr-map-badge">경로 확인</span>
-                </div>
-
-                <div
-                  className="wr-map-embed"
-                  role="region"
-                  aria-label="러닝 경로 지도"
-                >
-                  <MapScreen preview onPrepare={() => setActiveTab("run")} />
-                </div>
-
-                <p className="wr-map-caption">
-                  위치 권한을 허용해 현재 위치를 확인하거나, 경로를 지정해 데모 이동을 실행해 보세요.
-                </p>
-              </section>
-
-              <section className="wr-start-card">
-                <div>
-                  <h2>첫걸음부터 차근차근</h2>
-                  <p>오늘의 러닝을 준비해 보세요.</p>
-                </div>
-                <button
-                  className="wr-primary-button"
-                  type="button"
-                  onClick={() => setActiveTab("run")}
-                >
-                  러닝 준비하기 <span aria-hidden="true">→</span>
-                </button>
-              </section>
-
-              <RecommendedCourses onStart={() => setActiveTab("run")} />
-            </>
+          {activeTab === "profile" ? <ProfileScreen /> : activeTab === "history" ? <HistoryScreen onStart={startFromHome} /> : activeTab === "leaderboard" ? <LeaderboardScreen onLogin={() => setActiveTab("profile")} /> : activeTab === "events" ? <BusanEventsScreen /> : activeTab === "home" ? (
+            <HomeTab ref={territorySection} runStatus={runStatus} onStart={startFromHome} onHistory={() => setActiveTab("history")}
+              onLeaderboard={() => setActiveTab("leaderboard")} onLogin={() => setActiveTab("profile")}
+              onEvents={() => setActiveTab("events")} onPrepare={() => setActiveTab("run")} />
           ) : null}
           {runMounted && <div hidden={activeTab !== "run"}>
-            <RunScreen visible={activeTab === "run"} onHistory={() => setActiveTab("history")} />
+            <RunScreen onHistory={() => setActiveTab("history")} startRequest={startRequest} onStatusChange={setRunStatus}
+              visible={activeTab === "run"} onLiveClaim={setLiveClaim} />
           </div>}
         </main>
 
         <BottomNavigation
           activeTab={activeTab}
+          runStatus={runStatus}
           onChange={setActiveTab}
         />
       </div>

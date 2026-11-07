@@ -1,0 +1,56 @@
+/* 홈: 이번 주 현황판 */
+.wr-week > h1 { font-size: clamp(26px, 7.4vw, 30px); }
+.wr-week-distance { color: var(--wr-green); font-family: var(--wr-font-num); font-size: 1.9em; font-weight: 700; line-height: .9; letter-spacing: 0; }
+.wr-week > .wr-start-button { margin-top: 20px; }
+.wr-week-section { margin-top: 36px; }
+.wr-week-section h2 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+.wr-week-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wr-week-section > .wr-description { margin-top: 8px; }
+.wr-week-section > .wr-secondary-button { margin-top: 16px; }
+.wr-race-headline { min-height: 1.6em; margin: 6px 0 0; font-size: 16px; font-weight: 600; }
+.wr-race-gap { color: var(--wr-green); font-family: var(--wr-font-num); font-size: 24px; font-weight: 700; }
+.wr-race-estimate { margin: 2px 0 0; font-size: 14px; }
+.wr-race-chase { margin: 12px 0 0; padding: 10px 14px; border-radius: var(--wr-radius-control); background: var(--wr-sunk); font-size: 14px; font-weight: 600; }
+.wr-race-ghost { min-height: 75px; border-bottom: 1px solid var(--wr-border); background: linear-gradient(var(--wr-sunk), var(--wr-sunk)) 0 50% / 60% 14px no-repeat; }
+.wr-race-ghost:last-child { border-bottom: 0; }
+.wr-pending { opacity: .35; }
+.wr-recent-badge { margin-left: 8px; padding: 2px 7px; border-radius: 999px; background: var(--wr-sunk); color: var(--wr-muted); font-size: 12px; font-weight: 700; vertical-align: 2px; }
+.wr-turf { scroll-margin-top: 16px; }
+.wr-race { margin-bottom: 0; }
+.wr-recent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 16px 0;
+  border: 0;
+  border-block: 1px solid var(--wr-border);
+  background: transparent;
+  color: var(--wr-ink);
+  text-align: left;
+}
+.wr-recent > span:first-child { min-width: 0; }
+.wr-recent strong { display: block; overflow: hidden; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
+.wr-recent .wr-muted { display: block; margin-top: 2px; }
+.wr-recent-distance { flex: none; font-family: var(--wr-font-num); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.wr-recent-distance small { margin-left: 2px; color: var(--wr-muted); font-family: var(--wr-font); font-size: 13px; font-weight: 600; }
+.wr-week-map { height: 200px; margin-top: 12px; }
+
+/* 원격의 대회 일정 진입점과 목록도 같은 홈 표면을 사용한다. */
+.wr-event-highlight { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; margin: 24px 0; padding: 16px 0; border: 0; border-block: 1px solid var(--wr-border); background: transparent; color: var(--wr-ink); text-align: left; }
+.wr-event-highlight-copy { display: grid; gap: 4px; min-width: 0; }
+.wr-event-highlight-copy small, .wr-event-highlight-copy > span { color: var(--wr-muted); font-size: 13px; }
+.wr-event-highlight-copy strong { font-size: 16px; overflow-wrap: anywhere; }
+.wr-event-dday { flex: none; color: var(--wr-green); font-family: var(--wr-font-num); font-size: 24px; }
+.wr-events > h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+.wr-event-list { margin: 24px 0; padding: 0; list-style: none; }
+.wr-event-card { padding: 20px 0; border-block-end: 1px solid var(--wr-border); }
+.wr-event-topline, .wr-event-bottomline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--wr-muted); font-size: 13px; }
+.wr-event-topline span { color: var(--wr-green); font-weight: 700; }
+.wr-event-card h2 { margin: 10px 0 6px; font-size: 19px; }
+.wr-event-card p { margin: 0 0 12px; color: var(--wr-muted); font-size: 14px; }
+.wr-event-bottomline { padding-block: 8px; }
+.wr-event-card > a, .wr-events-source a { display: inline-flex; align-items: center; min-height: 44px; color: var(--wr-green); font-size: 14px; text-underline-offset: 3px; }
+.wr-events-source { color: var(--wr-muted); font-size: 13px; line-height: 1.75; }

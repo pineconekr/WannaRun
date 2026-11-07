@@ -4,7 +4,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import JSON, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, String, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -34,6 +34,17 @@ class AuthSession(Base):
 
 class Run(Base):
     __tablename__ = "runs"
+    __table_args__ = (
+        CheckConstraint("source IN ('gps', 'demo', 'legacy')", name="ck_runs_source"),
+        Index("ix_runs_owner_started", "user_id", "started_at", "id"),
+        Index(
+            "ix_runs_rankable_started",
+            "started_at",
+            "user_id",
+            postgresql_where=text("source = 'gps' AND distance_m > 0 AND duration_s > 0"),
+            sqlite_where=text("source = 'gps' AND distance_m > 0 AND duration_s > 0"),
+        ),
+    )
 
     id: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
@@ -46,3 +57,14 @@ class Run(Base):
     distance_m: Mapped[float] = mapped_column(Float)
     duration_s: Mapped[int] = mapped_column(Integer)
     path: Mapped[list] = mapped_column(JSON)
+    title: Mapped[str] = mapped_column(
+        String(120), default="오늘의 러닝", server_default="오늘의 러닝"
+    )
+    note: Mapped[str] = mapped_column(String(2000), default="", server_default="")
+    # Unclassified direct SQL inserts stay unranked; API/ORM creates default to gps.
+    source: Mapped[str] = mapped_column(
+        String(6), default="gps", server_default="legacy"
+    )
+    speed_samples: Mapped[list] = mapped_column(
+        JSON, default=list, server_default=text("'[]'")
+    )

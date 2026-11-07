@@ -1,0 +1,184 @@
+/* WannaRun 토큰과 공통 규칙. 숲 녹색은 브랜드와 행동, 귤색은 내가 차지한 땅과 그 성취에만 씁니다. */
+.wr-home {
+  --wr-green: #176b4a;
+  --wr-green-press: #0f5238;
+  --wr-ink: #14231c;
+  --wr-muted: #52635a;
+  --wr-border: #d9e0d7;
+  --wr-field-border: #76867c;
+  --wr-axis: #7a8a80;
+  --wr-backdrop: #e3e6dd;
+  --wr-canvas: #f4f5ef;
+  --wr-surface: #fff;
+  --wr-sunk: #eaede4;
+  --wr-tint: #e2eee4;
+  --wr-map-ground: #e6e9e0;
+  --wr-claim: #ff6a2b;
+  --wr-claim-ink: #b23c0c;
+  --wr-claim-tint: #ffeee3;
+  --wr-selection: #ffd4bd;
+  --wr-night: #0d1a14;
+  --wr-night-raise: #1a2c23;
+  --wr-night-text: #f1f5ef;
+  --wr-night-muted: #a7bcb0;
+  --wr-danger: #a3271f;
+  --wr-danger-tint: #fdeceb;
+  --wr-focus: #14231c;
+  --wr-font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
+  --wr-font-num: "Barlow Condensed", "Pretendard Variable", Pretendard, sans-serif;
+  --wr-ease: cubic-bezier(.16, 1, .3, 1);
+  --wr-radius: 16px;
+  --wr-radius-control: 12px;
+  --wr-float: 0 8px 24px -10px rgb(13 26 20 / .35);
+  position: absolute;
+  inset: 0;
+  min-height: 100%;
+  overflow: auto;
+  background: var(--wr-backdrop);
+  color: var(--wr-ink);
+  font-family: var(--wr-font);
+  font-size: 15px;
+  line-height: 1.6;
+  /* 한국어는 어절 단위로 줄을 바꿉니다("찍어 주 / 세요" 방지). */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  scrollbar-color: #b3bfb5 var(--wr-canvas);
+  -webkit-font-smoothing: antialiased;
+}
+
+.wr-home, .wr-home * { box-sizing: border-box; }
+.wr-home [hidden] { display: none !important; }
+.wr-home ::selection { background: var(--wr-selection); color: var(--wr-ink); }
+:where(.wr-home) :is(input, textarea) { caret-color: var(--wr-green); }
+:where(.wr-home) a { color: var(--wr-green); text-underline-offset: .2em; -webkit-tap-highlight-color: transparent; }
+:where(.wr-home) p { text-wrap: pretty; }
+:where(.wr-home) :is(h1, h2) { text-wrap: balance; }
+
+/* :where로 감싸 개별 컴포넌트의 글꼴·크기 지정이 항상 이기게 합니다. */
+:where(.wr-home) :is(button, summary) { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.wr-home button:disabled { cursor: not-allowed; opacity: .5; }
+.wr-home :is(button, a, summary):focus-visible { outline: 3px solid var(--wr-focus); outline-offset: 2px; }
+
+.wr-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.wr-shell { width: 100%; max-width: 480px; min-height: 100dvh; margin: 0 auto; background: var(--wr-canvas); }
+
+/* 제목 · 본문 역할 */
+.wr-week > h1, .wr-run-page > h1, .wr-page > h1, .wr-account h1 {
+  margin: 8px 0 0;
+  font-size: clamp(25px, 7vw, 29px);
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -.03em;
+}
+.wr-section-title { margin: 36px 0 8px; font-size: 19px; font-weight: 700; line-height: 1.4; letter-spacing: -.02em; }
+.wr-section-count { margin-left: 4px; color: var(--wr-claim-ink); font-family: var(--wr-font-num); font-size: 22px; font-weight: 700; }
+.wr-section-count small { margin-left: 1px; font-family: var(--wr-font); font-size: 15px; font-weight: 700; }
+.wr-description { margin: 8px 0 0; color: var(--wr-muted); font-size: 15px; line-height: 1.65; }
+.wr-muted { color: var(--wr-muted); font-size: 13px; line-height: 1.55; }
+.wr-notice { margin: 16px 0 0; padding: 14px 16px; border-radius: var(--wr-radius-control); background: var(--wr-sunk); color: var(--wr-muted); font-size: 14px; line-height: 1.6; }
+.wr-notice p { margin: 0; }
+.wr-notice .wr-actions { margin-top: 12px; }
+.wr-cells { display: inline-flex; align-items: baseline; gap: 3px; color: var(--wr-claim-ink); font-family: var(--wr-font-num); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wr-cells svg { width: .8em; height: .8em; align-self: center; fill: var(--wr-claim); }
+.wr-cells small { margin-left: 1px; font-family: var(--wr-font); font-size: .62em; font-weight: 700; }
+.wr-map-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--wr-tint);
+  color: var(--wr-green);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 버튼 */
+.wr-primary-button, .wr-secondary-button, .wr-danger-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 18px;
+  border-radius: var(--wr-radius-control);
+  font-size: 16px;
+  font-weight: 700;
+  transition: background-color .15s, transform .2s var(--wr-ease);
+}
+.wr-primary-button { border: 0; background: var(--wr-green); color: #fff; }
+.wr-primary-button:enabled:active { background: var(--wr-green-press); transform: scale(.98); }
+.wr-secondary-button { border: 1px solid var(--wr-border); background: var(--wr-surface); color: var(--wr-green); }
+.wr-secondary-button:enabled:active, .wr-danger-button:enabled:active { background: var(--wr-sunk); transform: scale(.98); }
+.wr-danger-button { border: 1px solid currentColor; background: var(--wr-surface); color: var(--wr-danger); }
+.wr-secondary-button + .wr-secondary-button { margin-top: 12px; }
+.wr-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.wr-actions > button { flex: 1 1 140px; width: auto; margin: 0 !important; }
+.wr-link-button { min-height: 44px; padding: 0 4px; border: 0; background: transparent; color: var(--wr-green); font-size: 14px; font-weight: 700; }
+.wr-link-button:active { opacity: .6; }
+
+.wr-start-button { justify-content: space-between; min-height: 60px; margin-top: 16px; padding-inline: 22px; font-size: 17px; }
+.wr-start-button svg { width: 22px; height: 22px; fill: currentColor; }
+
+/* 땅따먹기 규칙 목록 (홈 · 첫 화면) */
+.wr-rules { display: grid; gap: 16px; margin: 16px 0 0; padding: 0; list-style: none; counter-reset: rule; }
+.wr-rules li { display: grid; grid-template-columns: 36px 1fr; column-gap: 12px; color: var(--wr-muted); font-size: 15px; line-height: 1.55; counter-increment: rule; }
+.wr-rules li::before {
+  content: counter(rule);
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--wr-claim-tint);
+  color: var(--wr-claim-ink);
+  font-family: var(--wr-font-num);
+  font-size: 20px;
+  font-weight: 700;
+}
+.wr-rules strong { display: block; color: var(--wr-ink); font-size: 16px; }
+
+/* 지도 공통 */
+.wr-territory-map { overflow: hidden; border-radius: var(--wr-radius); background: var(--wr-map-ground); isolation: isolate; }
+.wr-home .leaflet-container { background: var(--wr-map-ground); font-family: var(--wr-font); }
+.wr-home .leaflet-bar { overflow: hidden; border: 0; border-radius: var(--wr-radius-control); box-shadow: var(--wr-float); }
+.wr-home .leaflet-bar a { width: 44px; height: 44px; color: var(--wr-ink); font: 600 22px/44px var(--wr-font); }
+.wr-home .leaflet-control-attribution { padding: 2px 6px; border-top-left-radius: 8px; background: rgb(255 255 255 / .82); color: var(--wr-muted); font-size: 11px; }
+.wr-home .leaflet-popup-content-wrapper { border-radius: var(--wr-radius-control); box-shadow: var(--wr-float); }
+.wr-home .leaflet-popup-content { margin: 10px 14px; font-size: 14px; font-weight: 600; }
+
+.wr-hex { fill: var(--wr-claim); fill-opacity: .34; stroke: var(--wr-claim-ink); stroke-opacity: .6; stroke-width: 1.2; }
+.wr-hex.is-new {
+  fill-opacity: .72;
+  stroke-opacity: 1;
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wr-claim .8s var(--wr-ease) both;
+}
+.wr-hex-d1 { animation-delay: 60ms; } .wr-hex-d2 { animation-delay: 120ms; } .wr-hex-d3 { animation-delay: 180ms; }
+.wr-hex-d4 { animation-delay: 240ms; } .wr-hex-d5 { animation-delay: 300ms; } .wr-hex-d6 { animation-delay: 360ms; }
+.wr-hex-d7 { animation-delay: 420ms; } .wr-hex-d8 { animation-delay: 480ms; } .wr-hex-d9 { animation-delay: 540ms; }
+.wr-hex-d10 { animation-delay: 600ms; } .wr-hex-d11 { animation-delay: 660ms; }
+@keyframes wr-claim {
+  from { fill-opacity: .12; transform: scale(.45); }
+  55% { fill-opacity: .85; }
+}
+@keyframes wr-claim-fade { from { fill-opacity: .12; } }
+
+.wr-route { fill: none; stroke: var(--wr-green); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.wr-route.is-plan { stroke-width: 3; stroke-dasharray: 1 9; }
+.wr-waypoint { fill: var(--wr-surface); fill-opacity: 1; stroke: var(--wr-green); stroke-width: 3; }
+.wr-me { fill: var(--wr-green); fill-opacity: 1; stroke: var(--wr-surface); stroke-width: 3; }
+
+@media (hover: hover) {
+  .wr-secondary-button:enabled:hover { background: var(--wr-tint); }
+}
+
+/* 모션을 줄이면 이동·확대는 없애고, 영토 등장은 투명도 변화로만 남깁니다. */
+@media (prefers-reduced-motion: reduce) {
+  .wr-home, .wr-home * { scroll-behavior: auto !important; }
+  .wr-home *, .wr-home *::before, .wr-home *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .wr-home .wr-hex.is-new { animation: wr-claim-fade .4s ease-out both !important; }
+}

@@ -3,6 +3,8 @@
 
 import re
 from datetime import datetime, timezone
+from typing import Annotated, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
 
@@ -43,18 +45,38 @@ class TokenResponse(BaseModel):
     expires_in: int
 
 
-# 좌표는 [위도, 경도]
-Point = tuple[float, float]
+# Coordinates are [latitude, longitude]; non-finite values never reach JSON storage.
+Latitude = Annotated[float, Field(ge=-90, le=90, allow_inf_nan=False)]
+Longitude = Annotated[float, Field(ge=-180, le=180, allow_inf_nan=False)]
+Point = tuple[Latitude, Longitude]
+NonnegativeFloat = Annotated[float, Field(ge=0, allow_inf_nan=False)]
+RunSource = Literal["gps", "demo", "legacy"]
+Period = Literal["all", "week", "month"]
 
 
-class RunCreate(BaseModel):
+class SpeedSample(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    elapsed_s: NonnegativeFloat
+    mps: NonnegativeFloat
+
+
+class RunMetadata(BaseModel):
+    title: str = Field(default="오늘의 러닝", min_length=1, max_length=120)
+    note: str = Field(default="", max_length=2000)
+
+
+class RunCreate(RunMetadata):
+    model_config = ConfigDict(extra="forbid")
+
+    id: UUID | None = None
     started_at: datetime
     ended_at: datetime
-    distance_m: float = Field(ge=0)
+    distance_m: NonnegativeFloat
     duration_s: int = Field(ge=0)
     path: list[Point] = Field(max_length=20000)
+    source: RunSource = "gps"
+    speed_samples: list[SpeedSample] = Field(default_factory=list, max_length=20000)
 
     # UTC로 통일해 저장. 시간대 없는 값(SQLite 로컬 DB에서 읽은 값 포함)은 UTC로 간주.
     @field_validator("started_at", "ended_at")
@@ -68,10 +90,49 @@ class RunCreate(BaseModel):
     def check_time_order(self):
         if self.ended_at < self.started_at:
             raise ValueError("종료 시각이 시작 시각보다 빠름")
+        previous = -1.0
+        for sample in self.speed_samples:
+            if sample.elapsed_s < previous or sample.elapsed_s > self.duration_s:
+                raise ValueError("속도 표본 시각은 순서대로 러닝 시간 안에 있어야 함")
+            previous = sample.elapsed_s
         return self
 
 
 class RunResponse(RunCreate):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
+    id: UUID
+
+
+class RunPatch(RunMetadata):
+    model_config = ConfigDict(extra="forbid")
+
+
+class PersonalStats(BaseModel):
+    total_distance_m: float
+    total_duration_s: int
+    run_count: int
+
+
+class LeaderboardEntry(PersonalStats):
+    rank: int
+    user_id: str
+    username: str
+
+
+class LeaderboardResponse(BaseModel):
+    period: Period
+    entries: list[LeaderboardEntry]
+
+
+class ActivityArea(BaseModel):
+    """약 2km 격자 칸의 중심 좌표와 그 칸을 지난 GPS 러닝 수."""
+
+    lat: float
+    lng: float
+    runs: int
+
+
+class ActivityAreas(BaseModel):
+    username: str
+    areas: list[ActivityArea]
