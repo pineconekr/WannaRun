@@ -8,12 +8,13 @@ import { SpeedChart } from '../components/SpeedChart';
 import { watchLocation, nativeTracking, type LocationPosition } from '../services/location';
 import { RunningSession, createRoutePlayer, distanceBetween, type RunResult } from '../services/tracking';
 import { duration } from '../services/runRecords';
+import { CUSTOM_DEMO_ROUTE_EVENT, CUSTOM_DEMO_ROUTE_KEY, readCustomDemoRoute, saveCustomDemoRoute } from '../services/customDemoRoute';
+import { SUYEONG_A_ROUND_TRIP } from '../services/suyeongACourse';
 export type { RunResult } from '../services/tracking';
 
 type Position = LocationPosition;
-const ROUTE_KEY = 'wannarun-custom-demo-route-v1';
 
-function MapViewport({ position }: { position: Position | null }) {
+function MapViewport({ position, route, active }: { position: Position | null; route: Position[]; active: boolean }) {
   const map = useMap();
   useEffect(() => {
     const observer = new ResizeObserver(() => map.invalidateSize());
@@ -21,7 +22,10 @@ function MapViewport({ position }: { position: Position | null }) {
     map.invalidateSize();
     return () => observer.disconnect();
   }, [map]);
-  useEffect(() => { if (position) map.panTo(position, { animate: false }); }, [map, position]);
+  useEffect(() => {
+    if (position) map.panTo(position, { animate: false });
+    else if (!active && route.length > 1) map.fitBounds(route, { padding: [24, 24], maxZoom: 16 });
+  }, [map, position, route, active]);
   return null;
 }
 
@@ -35,9 +39,11 @@ export default function MapScreen({ onFinish, preview = false, onPrepare, visibl
 }) {
   const [route, setRoute] = useState<Position[]>(() => {
     try {
-      const value = JSON.parse(localStorage.getItem(ROUTE_KEY) ?? '[]');
-      return Array.isArray(value) && value.every(p => Array.isArray(p) && p.length === 2 && p.every(Number.isFinite)) ? value : [];
-    } catch { return []; }
+      const value = JSON.parse(localStorage.getItem(CUSTOM_DEMO_ROUTE_KEY) ?? '[]');
+      return Array.isArray(value) && value.every(p => Array.isArray(p) && p.length === 2 && p.every(Number.isFinite))
+        ? (value.length > 1 ? value : SUYEONG_A_ROUND_TRIP)
+        : SUYEONG_A_ROUND_TRIP;
+    } catch { return SUYEONG_A_ROUND_TRIP; }
   });
   const [selecting, setSelecting] = useState(false);
   const [message, setMessage] = useState('위치 권한을 허용한 뒤 러닝을 시작해 주세요.');
@@ -65,6 +71,11 @@ export default function MapScreen({ onFinish, preview = false, onPrepare, visibl
 
   useEffect(() => { if (visible) render(value => value + 1); }, [visible]);
   useEffect(() => {
+    const updateRoute = () => setRoute(readCustomDemoRoute());
+    window.addEventListener(CUSTOM_DEMO_ROUTE_EVENT, updateRoute);
+    return () => window.removeEventListener(CUSTOM_DEMO_ROUTE_EVENT, updateRoute);
+  }, []);
+  useEffect(() => {
     if (!active || !visible) return;
     const tick = window.setInterval(draw, 1000);
     const refresh = () => draw();
@@ -81,7 +92,9 @@ export default function MapScreen({ onFinish, preview = false, onPrepare, visibl
 
   function saveRoute(next: Position[]) {
     setRoute(next);
-    try { localStorage.setItem(ROUTE_KEY, JSON.stringify(next)); }
+    try {
+      saveCustomDemoRoute(next);
+    }
     catch { setMessage('경로를 브라우저에 저장하지 못했어요.'); }
   }
 
@@ -198,7 +211,7 @@ export default function MapScreen({ onFinish, preview = false, onPrepare, visibl
     </>}
     <div className="wr-tracker-map">
       <MapContainer center={[35.1688, 129.1258]} zoom={16} style={{ height: '100%', width: '100%' }}>
-        <MapViewport position={position.current} />
+        <MapViewport position={position.current} route={route} active={active} />
         <RoutePicker enabled={selecting} onPick={p => saveRoute([...route, p])} />
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {!preview && <TerritoryLayer route={path} segments={pathSegments} hasFinishedRun={phase === 'finished'} enabled={territoryEnabled} resetToken={territoryReset} onTerritoryCountChange={setTerritories} />}

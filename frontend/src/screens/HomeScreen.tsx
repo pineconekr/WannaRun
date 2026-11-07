@@ -6,6 +6,7 @@ import HistoryScreen from "./HistoryScreen";
 import LeaderboardScreen from "./LeaderboardScreen";
 import BusanEventsScreen from "./BusanEventsScreen";
 import MapScreen from "./MapScreen";
+import RecommendedCourses from "../components/RecommendedCourses";
 import { daysUntilEvent, eventDate, getUpcomingBusanEvents } from "../services/busanEvents";
 import BottomNavigation from "../components/BottomNavigation";
 import type { NavigationTab } from "../components/BottomNavigation";
@@ -116,6 +117,8 @@ export default function HomeScreen() {
                   러닝 준비하기 <span aria-hidden="true">→</span>
                 </button>
               </section>
+
+              <RecommendedCourses onStart={() => setActiveTab("run")} />
             </>
           ) : null}
           {runMounted && <div hidden={activeTab !== "run"}>
