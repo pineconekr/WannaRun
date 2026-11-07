@@ -161,25 +161,30 @@ export default function ProfileScreen() {
             >›</button>
           </div>
         </header>
-        <div className="wr-calendar-grid wr-calendar-weekdays" aria-hidden="true">
-          {['월', '화', '수', '목', '금', '토', '일'].map((day) => <span key={day}>{day}</span>)}
-        </div>
-        <div className="wr-calendar-grid" role="grid" aria-label={`${displayedMonth.getFullYear()}년 ${displayedMonth.getMonth() + 1}월 러닝 출석`}>
-          {calendarCells.map((day, index) => {
-            const count = day ? monthlyCounts.get(dateKey(new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), day))) ?? 0 : 0;
-            return (
-              <span
-                key={`${displayedMonth.getMonth()}-${index}`}
-                className={`wr-calendar-day${day ? ` level-${Math.min(count, 3)}` : ' is-empty'}`}
-                role={day ? 'gridcell' : undefined}
-                aria-label={day ? `${day}일, 러닝 ${count}회` : undefined}
-                title={day ? `${day}일 · 러닝 ${count}회` : undefined}
-              >
-                {day ?? ''}
-              </span>
-            );
-          })}
-        </div>
+        <table className="wr-calendar">
+          <caption className="wr-visually-hidden">{displayedMonth.getFullYear()}년 {displayedMonth.getMonth() + 1}월 러닝 출석</caption>
+          <thead>
+            <tr>{['월', '화', '수', '목', '금', '토', '일'].map((day) => <th key={day} scope="col"><abbr title={`${day}요일`}>{day}</abbr></th>)}</tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: calendarRows }, (_, row) => (
+              <tr key={`${displayedMonth.getMonth()}-${row}`}>
+                {calendarCells.slice(row * 7, row * 7 + 7).map((day, column) => {
+                  const count = day ? monthlyCounts.get(dateKey(new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), day))) ?? 0 : 0;
+                  return (
+                    <td key={column}>
+                      {day && (
+                        <span className={`wr-calendar-day level-${Math.min(count, 3)}`} title={`${day}일 · 러닝 ${count}회`}>
+                          {day}<span className="wr-visually-hidden">일, 러닝 {count}회</span>
+                        </span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
         <div className="wr-calendar-legend" aria-label="출석 색상 범례">
           <span><i className="level-0" /> 없음</span>
           <span><i className="level-1" /> 1회</span>

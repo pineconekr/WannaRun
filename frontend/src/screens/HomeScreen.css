@@ -1,7 +1,7 @@
 .wr-home {
     --wr-green: #176b4a;
     --wr-text: #192b24;
-    --wr-muted: #6d7d74;
+    --wr-muted: #5c6d63;
     position: absolute;
     inset: 0;
     min-height: 100%;
@@ -45,10 +45,13 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: calc(22px + env(safe-area-inset-top, 0px)) 24px 18px;
+    padding: calc(19px + env(safe-area-inset-top, 0px)) 24px 15px;
   }
   
   .wr-logo {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     color: var(--wr-text);
     font-size: 25px;
     font-weight: 900;
@@ -235,7 +238,7 @@
     border: 0;
     border-radius: 14px;
     background: transparent;
-    color: #7c8981;
+    color: var(--wr-muted);
     font-size: 11px !important;
     font-weight: 600 !important;
   }
@@ -323,20 +326,20 @@
   .wr-event-highlight-copy small { color: var(--wr-muted); font-size: 10px; }
   .wr-event-highlight-copy strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
   .wr-event-highlight-copy > span { overflow: hidden; color: var(--wr-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-  .wr-event-dday { flex: 0 0 auto; color: #e85a2a; font-size: 16px; }
+  .wr-event-dday { flex: 0 0 auto; color: #b4461d; font-size: 16px; }
 
   .wr-events > h1 { margin: 0; font-size: 28px; }
   .wr-event-list { display: grid; gap: 12px; margin: 22px 0; padding: 0; list-style: none; }
   .wr-event-card { padding: 16px; border: 1px solid #dfe7df; border-radius: 18px; background: #fff; }
   .wr-event-topline, .wr-event-bottomline { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .wr-event-topline { color: var(--wr-muted); font-size: 11px; }
-  .wr-event-topline span { color: #e85a2a; font-weight: 800; }
+  .wr-event-topline span { color: #b4461d; font-weight: 800; }
   .wr-event-card h2 { margin: 9px 0 4px; font-size: 17px; }
   .wr-event-card p { margin: 0 0 12px; color: var(--wr-muted); font-size: 12px; }
   .wr-event-bottomline { padding: 10px 0; border-top: 1px solid #edf1ed; color: #52635a; font-size: 11px; }
-  .wr-event-card > a { display: inline-block; margin-top: 6px; color: var(--wr-green); font-size: 12px; font-weight: 700; text-decoration: none; }
+  .wr-event-card > a { display: inline-flex; align-items: center; min-height: 44px; color: var(--wr-green); font-size: 12px; font-weight: 700; text-decoration: none; }
   .wr-events-source { color: var(--wr-muted); font-size: 11px; line-height: 1.7; }
-  .wr-events-source a { color: var(--wr-green); }
+  .wr-events-source a { display: inline-flex; align-items: center; min-height: 44px; color: var(--wr-green); }
 /* Shared running UI: forest green, generous tap targets, and mobile safe areas. */
 .wr-home { --wr-border: #dfe7df; --wr-surface: #fff; line-height: 1.5; }
 .wr-home button { touch-action: manipulation; }
@@ -353,6 +356,7 @@
 .wr-tracker [aria-label="러닝 기록"] { margin: 16px 0; padding: 16px; border-radius: 16px; background: #edf2e9; font-size: 13px; }
 .wr-tracker [aria-label="러닝 기록"] strong { font-variant-numeric: tabular-nums; }
 .wr-tracker .leaflet-container { border-radius: 16px; font-family: inherit; }
+.wr-tracker .leaflet-bar a, .wr-tracker .leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 22px; }
 .wr-secondary-button { width: 100%; margin-top: 12px; }
 .wr-result { margin-top: 24px; padding: 20px; border: 1px solid var(--wr-border); border-radius: 24px; background: white; }
 .wr-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 12px; margin: 24px 0; }

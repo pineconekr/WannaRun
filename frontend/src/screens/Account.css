@@ -28,31 +28,31 @@
 .wr-badge-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 0; padding: 0; list-style: none; }
 .wr-badge-card { display: grid; justify-items: center; gap: 5px; min-width: 0; padding: 12px 6px; border-radius: 14px; text-align: center; }
 .wr-badge-card.is-earned { background: #edf5ec; color: #176b4a; }
-.wr-badge-card.is-locked { background: #f4f6f4; color: #87928a; }
+.wr-badge-card.is-locked { background: #f4f6f4; color: #5f6b63; }
 .wr-badge-icon { font-size: 24px; }
 .wr-badge-card strong { font-size: 12px; }
 .wr-badge-earned-date { color: #607267; font-size: 9px; }
 .wr-badge-card > span:not(.wr-badge-icon) { font-size: 10px; }
 .wr-badge-card small { font-size: 9px; }
 .wr-profile-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin-top: 14px; padding: 4px; border: 1px solid #e2e9e2; border-radius: 13px; background: #fff; }
-.wr-profile-tabs button { min-height: 38px; border: 0; border-radius: 9px; background: transparent; color: #607267; font: inherit; font-size: 13px; font-weight: 700; }
+.wr-profile-tabs button { min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: #607267; font: inherit; font-size: 13px; font-weight: 700; }
 .wr-profile-tabs button.is-active { background: #176b4a; color: #fff; }
 .wr-attendance { margin-top: 14px; padding: 16px; border: 1px solid #e2e9e2; border-radius: 18px; background: #fff; }
-.wr-attendance-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
-.wr-attendance-header h2 { margin: 0; font-size: 16px; }
-.wr-attendance-header > div { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-.wr-attendance-header button { width: 28px; height: 28px; border: 0; border-radius: 8px; background: #f2f6f1; color: #176b4a; font-size: 20px; line-height: 1; }
+.wr-attendance-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.wr-attendance-header h2 { margin: 0; font-size: 16px; white-space: nowrap; }
+.wr-attendance-header > div { display: flex; align-items: center; gap: 4px; margin-left: auto; font-size: 13px; white-space: nowrap; }
+.wr-attendance-header button { width: 44px; height: 44px; border: 0; border-radius: 12px; background: #f2f6f1; color: #176b4a; font-size: 20px; line-height: 1; }
 .wr-attendance-header button:disabled { opacity: .35; cursor: default; }
-.wr-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
-.wr-calendar-weekdays { margin-bottom: 5px; color: #76847b; font-size: 10px; text-align: center; }
-.wr-calendar-weekdays span { padding: 3px 0; }
+.wr-calendar { width: calc(100% + 10px); margin: -5px; border-collapse: separate; border-spacing: 5px; table-layout: fixed; }
+.wr-calendar th { padding: 3px 0; color: var(--wr-muted); font-size: 10px; font-weight: 400; text-align: center; }
+.wr-calendar abbr { text-decoration: none; }
+.wr-calendar td { padding: 0; }
 .wr-calendar-day { display: grid; place-items: center; aspect-ratio: 1; min-width: 0; border-radius: 6px; color: #52635a; font-size: 10px; }
-.wr-calendar-day.is-empty { background: transparent; }
 .wr-calendar-day.level-0, .wr-calendar-legend .level-0 { background: #edf3ee; }
-.wr-calendar-day.level-1, .wr-calendar-legend .level-1 { background: #b9ddc8; }
-.wr-calendar-day.level-2, .wr-calendar-legend .level-2 { background: #63ad82; color: #fff; }
+.wr-calendar-day.level-1, .wr-calendar-legend .level-1 { background: #b9ddc8; color: var(--wr-text); }
+.wr-calendar-day.level-2, .wr-calendar-legend .level-2 { background: #63ad82; color: var(--wr-text); }
 .wr-calendar-day.level-3, .wr-calendar-legend .level-3 { background: #176b4a; color: #fff; }
-.wr-calendar-legend { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; margin-top: 11px; color: #76847b; font-size: 9px; }
+.wr-calendar-legend { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; margin-top: 11px; color: var(--wr-muted); font-size: 9px; }
 .wr-calendar-legend span { display: inline-flex; align-items: center; gap: 4px; }
 .wr-calendar-legend i { width: 10px; height: 10px; border-radius: 3px; }
 .wr-profile-distance { margin: 14px 2px 0; color: #607267; font-size: 12px; text-align: center; }
@@ -61,3 +61,4 @@
 .wr-run-list .wr-profile-card { margin-top: 14px; padding: 18px 16px; text-align: left; }
 .wr-run-list h2 { margin: 0 0 6px; font-size: 17px; }
 .wr-run-list p { margin: 0; }
+.wr-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }

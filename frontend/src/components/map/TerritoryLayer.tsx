@@ -14,6 +14,7 @@ type TerritoryLayerProps = {
   segments?: Position[][];
   hasFinishedRun: boolean;
   enabled: boolean;
+  resetToken: number;
   onTerritoryCountChange: (count: number) => void;
 };
 
@@ -111,10 +112,11 @@ function getCellsAlongRoute(route: Position[]): Record<string, TerritoryCell> {
   return cells;
 }
 
-export default function TerritoryLayer({ route, segments, hasFinishedRun, enabled, onTerritoryCountChange }: TerritoryLayerProps) {
+export default function TerritoryLayer({ route, segments, hasFinishedRun, enabled, resetToken, onTerritoryCountChange }: TerritoryLayerProps) {
   const [territories, setTerritories] = useState<Record<string, TerritoryCell>>({});
   const territoriesRef = useRef<Record<string, TerritoryCell>>({});
   const finishHandledRef = useRef(false);
+  const handledResetRef = useRef(resetToken);
 
   useEffect(() => {
     try {
@@ -143,8 +145,10 @@ export default function TerritoryLayer({ route, segments, hasFinishedRun, enable
     }
   }, [onTerritoryCountChange]);
 
+  // 끄기는 표시·점령만 멈추고, 저장 기록 삭제는 명시적 초기화 요청에서만 수행합니다.
   useEffect(() => {
-    if (enabled) return;
+    if (resetToken === handledResetRef.current) return;
+    handledResetRef.current = resetToken;
 
     territoriesRef.current = {};
     setTerritories({});
@@ -155,7 +159,7 @@ export default function TerritoryLayer({ route, segments, hasFinishedRun, enable
     } catch {
       // 저장 공간을 사용할 수 없어도 현재 화면의 점령 기록은 초기화합니다.
     }
-  }, [enabled, onTerritoryCountChange]);
+  }, [resetToken, onTerritoryCountChange]);
 
   useEffect(() => {
     if (!hasFinishedRun) {

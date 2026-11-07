@@ -12,6 +12,9 @@ import type { NavigationTab } from "../components/BottomNavigation";
 import "./HomeScreen.css";
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<NavigationTab>("home");
+  // 러닝 화면은 처음 열 때 만들고, 이후에는 다른 탭에서도 측정이 이어지도록 유지.
+  const [runMounted, setRunMounted] = useState(false);
+  if (activeTab === "run" && !runMounted) setRunMounted(true);
   const nextBusanEvent = getUpcomingBusanEvents()[0];
 
   return (
@@ -52,7 +55,6 @@ export default function HomeScreen() {
                 className="wr-leaderboard-link"
                 type="button"
                 onClick={() => setActiveTab("leaderboard")}
-                aria-label="이번 주 러닝 순위 보기"
               >
                 <span>친구 · 이번 주 러닝 순위 확인</span>
                 <span aria-hidden="true">›</span>
@@ -116,9 +118,9 @@ export default function HomeScreen() {
               </section>
             </>
           ) : null}
-          <div hidden={activeTab !== "run"}>
-            <RunScreen onHistory={() => setActiveTab("history")} />
-          </div>
+          {runMounted && <div hidden={activeTab !== "run"}>
+            <RunScreen visible={activeTab === "run"} onHistory={() => setActiveTab("history")} />
+          </div>}
         </main>
 
         <BottomNavigation

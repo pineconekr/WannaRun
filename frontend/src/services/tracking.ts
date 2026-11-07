@@ -15,6 +15,26 @@ export function distanceBetween(a: LocationPosition, b: LocationPosition): numbe
   return 6371000 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(Math.max(0, 1 - x)));
 }
 
+// 데모 경로를 약 stepMeters 간격으로 필요할 때마다 생성. 긴 경로도 전체 점 배열을 미리 만들지 않음.
+export function createRoutePlayer(route: LocationPosition[], stepMeters = 15): () => LocationPosition | null {
+  let started = false;
+  let leg = 1;
+  let step = 0;
+  let steps = 0;
+  return () => {
+    if (!started) { started = true; return route[0] ?? null; }
+    if (leg >= route.length) return null;
+    const from = route[leg - 1];
+    const to = route[leg];
+    if (steps === 0) steps = Math.max(1, Math.ceil(distanceBetween(from, to) / stepMeters));
+    step += 1;
+    const ratio = step / steps;
+    const point: LocationPosition = [from[0] + (to[0] - from[0]) * ratio, from[1] + (to[1] - from[1]) * ratio];
+    if (step === steps) { leg += 1; step = 0; steps = 0; }
+    return point;
+  };
+}
+
 // 타이머 호출 횟수가 아니라 위치 측정 시각과 실제 경과 시간으로 계산.
 export class RunningSession {
   id = crypto.randomUUID();

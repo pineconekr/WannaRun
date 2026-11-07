@@ -8,14 +8,16 @@ import { saveRunningRecord } from '../services/api';
 import { nativeTracking } from '../services/location';
 import './RunScreen.css';
 
-export default function RunScreen({ onHistory }: { onHistory: () => void }) {
+type ServerSave = { runId: string; state: 'info' | 'saving' | 'saved' | 'failed'; message: string };
+
+export default function RunScreen({ onHistory, visible = true }: { onHistory: () => void; visible?: boolean }) {
   const { user, token } = useAuth();
   const [result, setResult] = useState<RunResult | null>(null);
   const [title, setTitle] = useState('오늘의 러닝');
   const [note, setNote] = useState('');
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [serverStatus, setServerStatus] = useState('');
+  const [serverSave, setServerSave] = useState<ServerSave | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [session, setSession] = useState(0);
   useEffect(() => {
@@ -25,28 +27,40 @@ export default function RunScreen({ onHistory }: { onHistory: () => void }) {
     return () => window.removeEventListener('beforeunload', warn);
   }, [result, saved]);
   function reset() {
-    setResult(null); setServerStatus(''); setSaved(false); setError(''); setConfirmDiscard(false);
+    setResult(null); setServerSave(null); setSaved(false); setError(''); setConfirmDiscard(false);
     setTitle('오늘의 러닝'); setNote(''); setSession(value => value + 1);
   }
-  function finishRun(value: RunResult) {
-    setResult(value); setSaved(false);
-    if (value.source === 'demo') {
-      setServerStatus('데모는 서버에 전송하지 않아요. 그래프와 메모는 이 브라우저에 저장할 수 있어요.');
-      return;
-    }
-    if (!token) { setServerStatus('로그인하면 GPS 기록을 서버에 저장할 수 있어요.'); return; }
-    setServerStatus('서버에 GPS 기록을 저장하고 있어요…');
+  function uploadRun(value: RunResult, authToken: string) {
+    setServerSave({ runId: value.id, state: 'saving', message: '서버에 GPS 기록을 저장하고 있어요…' });
     // 준수님 DB 작업과 분리: 기존 API 필드만 전송.
     void saveRunningRecord({
       started_at: value.startedAt, ended_at: value.endedAt,
       distance_m: value.distanceMeters, duration_s: value.durationSeconds, path: value.path,
-    }, token).then(stored => {
+    }, authToken).then(stored => {
       setResult(current => current?.id === value.id ? { ...current, serverId: stored.id } : current);
-      setServerStatus('서버에 GPS 기록을 저장했어요. 속도 그래프·제목·메모는 브라우저에 별도로 저장해요.');
+      // 늦게 끝난 이전 러닝 요청이 현재 결과의 저장 상태를 덮어쓰지 않도록 러닝 ID를 확인.
+      setServerSave(current => current?.runId === value.id
+        ? { runId: value.id, state: 'saved', message: '서버에 GPS 기록을 저장했어요. 속도 그래프·제목·메모는 브라우저에 별도로 저장해요.' }
+        : current);
       window.dispatchEvent(new Event('wannarun:records'));
     }).catch(reason => {
-      setServerStatus(reason instanceof Error ? `서버 저장 실패: ${reason.message}` : '서버 저장에 실패했어요. 결과를 브라우저에 저장해 주세요.');
+      const detail = reason instanceof Error ? reason.message : '서버에 연결하지 못했어요.';
+      setServerSave(current => current?.runId === value.id
+        ? { runId: value.id, state: 'failed', message: `서버 저장 실패: ${detail}` }
+        : current);
     });
+  }
+  function finishRun(value: RunResult) {
+    setResult(value); setSaved(false);
+    if (value.source === 'demo') {
+      setServerSave({ runId: value.id, state: 'info', message: '데모는 서버에 전송하지 않아요. 그래프와 메모는 이 브라우저에 저장할 수 있어요.' });
+      return;
+    }
+    if (!token) {
+      setServerSave({ runId: value.id, state: 'info', message: '로그인하면 GPS 기록을 서버에 저장할 수 있어요.' });
+      return;
+    }
+    uploadRun(value, token);
   }
   return <section className="wr-run-page" aria-labelledby="run-title">
     <p className="wr-eyebrow">YOUR PACE, YOUR RUN</p>
@@ -54,13 +68,16 @@ export default function RunScreen({ onHistory }: { onHistory: () => void }) {
     <p className="wr-description">{result ? '수고했어요. 오늘의 움직임을 남겨 보세요.' : '기록보다 중요한 건, 오늘의 시작.'}</p>
     <p className="wr-notice">{nativeTracking ? 'Android 앱은 알림·위치 권한을 허용하면 화면 잠금 중에도 측정해요. 강제 종료는 지원하지 않아요.' : '웹은 화면을 켜고 페이지를 열어 두세요. 화면 잠금 중 측정은 Android 앱에서 사용해 주세요.'} 일시정지 시간과 이동은 제외해요.</p>
     <div hidden={Boolean(result)} className="wr-map-card wr-running-map">
-      <MapScreen key={session} onFinish={finishRun} />
+      <MapScreen key={session} onFinish={finishRun} visible={visible && !result} />
     </div>
     {result && <div className="wr-result">
       <span className="wr-map-badge">{result.source === 'demo' ? '데모 · 환산 시간' : 'GPS 측정'} · 러닝 종료</span>
       <RunStats record={result} />
       <SpeedChart samples={result.speedSamples} />
-      {serverStatus && <p className="wr-notice" role="status">{serverStatus}</p>}
+      {serverSave && <div className={`wr-save-status ${serverSave.state === 'failed' ? 'wr-error' : 'wr-notice'}`} role={serverSave.state === 'failed' ? 'alert' : 'status'}>
+        <p>{serverSave.message}</p>
+        {serverSave.state === 'failed' && token && <button className="wr-secondary-button" onClick={() => uploadRun(result, token)}>서버에 다시 저장</button>}
+      </div>}
       <p className="wr-description">{new Date(result.startedAt).toLocaleString('ko-KR')} 시작<br />{result.source === 'demo' ? '데모 재생' : '위치 수신'} {result.points}회 · {result.source === 'demo' ? '지정 경로와 환산 시간으로 만든 결과예요.' : result.distanceMeters === 0 ? '이동 거리가 측정되지 않았어요.' : 'GPS 오차가 포함될 수 있어요.'}</p>
       <form className="wr-form" onSubmit={event => {
         event.preventDefault();

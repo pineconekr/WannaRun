@@ -7,6 +7,10 @@
 .wr-tracker .wr-actions > button { flex: 1 1 140px; width: auto; margin: 0; }
 .wr-tracker .wr-primary-button { background: var(--wr-green); color: #fff; }
 .wr-tracker .wr-actions > .wr-secondary-button { background: var(--wr-surface); color: var(--wr-green); }
+.wr-territory-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; margin-top: 12px; }
+.wr-tracker .wr-territory-controls > .wr-text-button { margin: 0; background: var(--wr-surface); color: var(--wr-green); }
+.wr-territory-hint { margin: 8px 0 0; text-align: center; line-height: 1.6; }
+.wr-save-status > p { margin: 0; }
 .wr-stat-secondary { display: block; margin-top: 4px; color: #607267; font-size: 13px; font-weight: 500; }
 .wr-speed-chart { margin: 24px 0 0; padding-top: 20px; border-top: 1px solid var(--wr-border); }
 .wr-chart-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }

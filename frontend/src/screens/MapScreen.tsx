@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import TerritoryLayer from '../components/map/TerritoryLayer';
 import { SpeedChart } from '../components/SpeedChart';
 import { watchLocation, nativeTracking, type LocationPosition } from '../services/location';
-import { RunningSession, distanceBetween, type RunResult } from '../services/tracking';
+import { RunningSession, createRoutePlayer, distanceBetween, type RunResult } from '../services/tracking';
 import { duration } from '../services/runRecords';
 export type { RunResult } from '../services/tracking';
 
@@ -30,8 +30,8 @@ function RoutePicker({ enabled, onPick }: { enabled: boolean; onPick: (p: Positi
   return null;
 }
 
-export default function MapScreen({ onFinish, preview = false, onPrepare }: {
-  onFinish?: (result: RunResult) => void; preview?: boolean; onPrepare?: () => void;
+export default function MapScreen({ onFinish, preview = false, onPrepare, visible = true }: {
+  onFinish?: (result: RunResult) => void; preview?: boolean; onPrepare?: () => void; visible?: boolean;
 }) {
   const [route, setRoute] = useState<Position[]>(() => {
     try {
@@ -44,29 +44,38 @@ export default function MapScreen({ onFinish, preview = false, onPrepare }: {
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [territoryEnabled, setTerritoryEnabled] = useState(true);
   const [territories, setTerritories] = useState(0);
+  const [territoryReset, setTerritoryReset] = useState(0);
+  const [confirmTerritoryReset, setConfirmTerritoryReset] = useState(false);
   const [, render] = useState(0);
   const session = useRef<RunningSession | null>(null);
   const cleanup = useRef<(() => void) | null>(null);
   const position = useRef<Position | null>(null);
   const simulatedClock = useRef(0);
-  const demoIndex = useRef(0);
   const simulatedGps = useRef(false);
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
   const run = session.current;
   const phase = run?.phase ?? 'ready';
   const active = phase === 'running' || phase === 'paused';
   const elapsed = run?.elapsed(run.source === 'demo' ? simulatedClock.current : Date.now()) ?? 0;
   const path = React.useMemo(() => run?.path.slice() ?? [], [run, run?.path.length]);
   const pathSegments = React.useMemo(() => run?.pathSegments.map(segment => segment.slice()) ?? [], [run, run?.path.length]);
-  const draw = () => render(value => value + 1);
+  // 다른 탭에 있는 동안에는 측정만 계속하고 지도·통계 화면은 다시 그리지 않음.
+  const draw = () => { if (visibleRef.current) render(value => value + 1); };
 
+  useEffect(() => { if (visible) render(value => value + 1); }, [visible]);
+  useEffect(() => {
+    if (!active || !visible) return;
+    const tick = window.setInterval(draw, 1000);
+    const refresh = () => draw();
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearInterval(tick); document.removeEventListener('visibilitychange', refresh); };
+  }, [active, visible]);
   useEffect(() => {
     if (!active) return;
-    const tick = window.setInterval(draw, 1000);
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
-    const refresh = () => draw();
     window.addEventListener('beforeunload', warn);
-    document.addEventListener('visibilitychange', refresh);
-    return () => { window.clearInterval(tick); window.removeEventListener('beforeunload', warn); document.removeEventListener('visibilitychange', refresh); };
+    return () => window.removeEventListener('beforeunload', warn);
   }, [active]);
   useEffect(() => () => cleanup.current?.(), []);
 
@@ -101,7 +110,7 @@ export default function MapScreen({ onFinish, preview = false, onPrepare }: {
       if (update.simulated) simulatedGps.current = true;
       if (current.ingest(update)) {
         position.current = update.position;
-        setMessage(`위치 수신 중 · 정확도 약 ${Math.round(update.accuracy)}m`);
+        if (visibleRef.current) setMessage(`위치 수신 중 · 정확도 약 ${Math.round(update.accuracy)}m`);
         draw();
       }
     }, (error, fatal) => {
@@ -123,26 +132,19 @@ export default function MapScreen({ onFinish, preview = false, onPrepare }: {
     const current = new RunningSession('demo');
     session.current = current;
     simulatedClock.current = current.started;
-    demoIndex.current = 0;
     setSelecting(false);
     setMessage('데모 이동 · 걷는 속도로 환산하며 순위에서는 제외해요.');
-    const points: Position[] = [route[0]];
-    for (let i = 1; i < route.length; i++) {
-      const count = Math.max(1, Math.ceil(distanceBetween(route[i - 1], route[i]) / 15));
-      for (let j = 1; j <= count; j++) points.push([
-        route[i - 1][0] + (route[i][0] - route[i - 1][0]) * j / count,
-        route[i - 1][1] + (route[i][1] - route[i - 1][1]) * j / count,
-      ]);
-    }
+    const nextPoint = createRoutePlayer(route);
+    let previous: Position | null = null;
     const tick = () => {
       if (current.phase !== 'running') return;
-      const i = demoIndex.current;
-      if (i >= points.length) { finish(); return; }
-      const travelled = i === 0 ? 0 : distanceBetween(points[i - 1], points[i]);
+      const point = nextPoint();
+      if (!point) { finish(); return; }
+      const travelled = previous ? distanceBetween(previous, point) : 0;
       simulatedClock.current += Math.max(1, travelled / 1.2 * 1000);
-      current.ingest({ position: points[i], accuracy: 1, timestamp: simulatedClock.current, speed: i ? 1.2 : 0, simulated: true });
-      position.current = points[i];
-      demoIndex.current += 1;
+      current.ingest({ position: point, accuracy: 1, timestamp: simulatedClock.current, speed: previous ? 1.2 : 0, simulated: true });
+      previous = point;
+      position.current = point;
       draw();
     };
     tick();
@@ -184,14 +186,22 @@ export default function MapScreen({ onFinish, preview = false, onPrepare }: {
         <button className="wr-primary-button" onClick={finish}>종료하고 결과 보기</button>
       </div></div>}
       {selecting && <p className="wr-description">지도에서 출발점과 도착점을 포함해 두 곳 이상 찍어 주세요. 현재 {route.length}곳.</p>}
-      <button className="wr-text-button" aria-pressed={territoryEnabled} onClick={() => setTerritoryEnabled(!territoryEnabled)}>땅따먹기 {territoryEnabled ? '켜짐' : '꺼짐'} · {territories}칸</button>
+      <div className="wr-territory-controls">
+        <button className="wr-text-button" aria-pressed={territoryEnabled} onClick={() => setTerritoryEnabled(!territoryEnabled)}>땅따먹기 {territoryEnabled ? '켜짐' : '꺼짐'} · {territories}칸</button>
+        {territories > 0 && !active && <button className="wr-text-button" onClick={() => setConfirmTerritoryReset(true)}>점령 기록 지우기</button>}
+      </div>
+      {!territoryEnabled && <p className="wr-muted wr-territory-hint">꺼 두면 지도에 표시하지 않고 이번 러닝은 점령하지 않아요. 기존 기록은 그대로 남아요.</p>}
+      {confirmTerritoryReset && !active && <div className="wr-notice" role="alert"><p>점령한 {territories}칸을 모두 지울까요? 지운 기록은 되돌릴 수 없어요.</p><div className="wr-actions">
+        <button className="wr-secondary-button" onClick={() => setConfirmTerritoryReset(false)}>취소</button>
+        <button className="wr-secondary-button" onClick={() => { setTerritoryReset(value => value + 1); setConfirmTerritoryReset(false); }}>기록 지우기</button>
+      </div></div>}
     </>}
     <div className="wr-tracker-map">
       <MapContainer center={[35.1688, 129.1258]} zoom={16} style={{ height: '100%', width: '100%' }}>
         <MapViewport position={position.current} />
         <RoutePicker enabled={selecting} onPick={p => saveRoute([...route, p])} />
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        {!preview && <TerritoryLayer route={path} segments={pathSegments} hasFinishedRun={phase === 'finished'} enabled={territoryEnabled} onTerritoryCountChange={setTerritories} />}
+        {!preview && <TerritoryLayer route={path} segments={pathSegments} hasFinishedRun={phase === 'finished'} enabled={territoryEnabled} resetToken={territoryReset} onTerritoryCountChange={setTerritories} />}
         {route.length > 1 && !active && <Polyline positions={route} color="#176b4a" dashArray="6 6" />}
         {route.map((p, i) => <CircleMarker key={i} center={p} radius={5}><Popup>{i === 0 ? '출발점' : `경유지 ${i}`}</Popup></CircleMarker>)}
         {position.current && <CircleMarker center={position.current} radius={7}><Popup>현재 위치</Popup></CircleMarker>}

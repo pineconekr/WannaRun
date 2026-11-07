@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { RunningSession, distanceBetween } from '../src/services/tracking.ts';
+import { RunningSession, createRoutePlayer, distanceBetween } from '../src/services/tracking.ts';
 
 const started = Date.parse('2026-11-07T00:00:00Z');
 const fix = (seconds: number, longitude: number, speed: number | null = null) => ({
@@ -53,4 +53,16 @@ test('stale and inaccurate fixes do not alter distance, samples or path', () => 
   assert.equal(run.distance, 0);
   assert.equal(run.path.length, 1);
   assert.equal(run.samples.length, 0);
+});
+
+test('demo route player walks every leg in bounded steps and ends at the last waypoint', () => {
+  const route: [number, number][] = [[35, 129], [35, 129.001], [35.0005, 129.001]];
+  const next = createRoutePlayer(route, 15);
+  const points: [number, number][] = [];
+  for (let point = next(); point; point = next()) points.push(point);
+  assert.deepEqual(points[0], route[0]);
+  assert.deepEqual(points.at(-1), route[2]);
+  assert.ok(points.some(point => point[0] === route[1][0] && Math.abs(point[1] - route[1][1]) < 1e-12));
+  for (let i = 1; i < points.length; i++) assert.ok(distanceBetween(points[i - 1], points[i]) <= 15.0001);
+  assert.equal(next(), null);
 });
