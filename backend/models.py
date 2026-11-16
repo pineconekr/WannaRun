@@ -32,6 +32,21 @@ class AuthSession(Base):
     expires_at: Mapped[float] = mapped_column(Float)
 
 
+class TerritoryCell(Base):
+    """사용자가 지나간 H3 칸(해상도 11). 사용자당 칸 하나는 한 행입니다."""
+
+    __tablename__ = "territory_cells"
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    cell_id: Mapped[str] = mapped_column(String(15), primary_key=True)
+    first_run_id: Mapped[str | None] = mapped_column(
+        ForeignKey("runs.id", ondelete="SET NULL"), default=None
+    )
+    captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class Run(Base):
     __tablename__ = "runs"
     __table_args__ = (

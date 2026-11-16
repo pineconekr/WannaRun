@@ -1,6 +1,5 @@
 """시연용 데모 러너와 GPS 러닝 기록을 넣거나 지웁니다.
 
-로컬 SQLite:  uv run python -m backend.seed_demo --sqlite backend/auth-test.sqlite3
 Neon:         DATABASE_URL 설정 후 uv run python -m backend.seed_demo --yes
 제거:         같은 명령에 --remove
 
@@ -15,14 +14,14 @@ import math
 import random
 import secrets
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
-from sqlalchemy import create_engine, delete, select
+from sqlalchemy import delete, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from backend.auth import password_hasher
-from backend.models import AuthSession, Run, User
+from backend.models import AuthSession, Run, TerritoryCell, User
+from backend.territory import claim_run
 
 # (아이디, 평균 페이스 초/km, 러닝 횟수, 평소 거리 km)
 DEMO_RUNNERS = (
@@ -112,6 +111,7 @@ def seed(engine: Engine, password: str | None = None, now: datetime | None = Non
                 db.flush()
             elif password:
                 user.password_hash = password_hasher.hash(password)
+            db.execute(delete(TerritoryCell).where(TerritoryCell.user_id == user.id))
             db.execute(delete(Run).where(Run.user_id == user.id))
 
             rng = random.Random(username)
@@ -119,7 +119,10 @@ def seed(engine: Engine, password: str | None = None, now: datetime | None = Non
             days_ago = sorted([rng.uniform(0.05, 0.4)] + [rng.uniform(1, HISTORY_DAYS) for _ in range(count - 1)])
             for ago in days_ago:
                 started = now - timedelta(days=ago, hours=1)
-                db.add(_run(rng, user.id, pace_s, km, started))
+                run = _run(rng, user.id, pace_s, km, started)
+                db.add(run)
+                db.flush()
+                claim_run(db, run)
     return created_password
 
 
@@ -127,6 +130,7 @@ def remove(engine: Engine) -> int:
     with Session(engine) as db, db.begin():
         ids = list(db.scalars(select(User.id).where(User.username.in_(DEMO_USERNAMES))))
         if ids:
+            db.execute(delete(TerritoryCell).where(TerritoryCell.user_id.in_(ids)))
             db.execute(delete(Run).where(Run.user_id.in_(ids)))
             db.execute(delete(AuthSession).where(AuthSession.user_id.in_(ids)))
             db.execute(delete(User).where(User.id.in_(ids)))
@@ -135,7 +139,6 @@ def remove(engine: Engine) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--sqlite", type=Path, help="이 로컬 SQLite 파일에 넣기")
     parser.add_argument("--password", help="데모 계정 비밀번호(8자 이상). 없으면 새 계정에만 무작위로 만들어 출력")
     parser.add_argument("--remove", action="store_true", help="데모 러너와 그 기록만 지우기")
     parser.add_argument("--yes", action="store_true", help="DATABASE_URL(Neon 등)에 실제로 쓰기")
@@ -143,18 +146,15 @@ def main() -> None:
     if args.password is not None and len(args.password) < 8:
         parser.error("--password는 8자 이상")
 
-    if args.sqlite is not None:
-        engine = create_engine(f"sqlite:///{args.sqlite.resolve().as_posix()}")
-    else:
-        from backend.database import engine
+    from backend.database import engine
 
-        if engine is None:
-            raise RuntimeError("DATABASE_URL 설정 필요 (또는 --sqlite 파일 경로).")
-        target = engine.url.render_as_string(hide_password=True)
-        if not args.yes:
-            action = "삭제" if args.remove else "추가"
-            print(f"대상: {target}\n데모 러너 {len(DEMO_RUNNERS)}명 {action} 예정. 실제로 쓰려면 --yes를 붙이세요.")
-            return
+    if engine is None:
+        raise RuntimeError("DATABASE_URL 설정 필요.")
+    target = engine.url.render_as_string(hide_password=True)
+    if not args.yes:
+        action = "삭제" if args.remove else "추가"
+        print(f"대상: {target}\n데모 러너 {len(DEMO_RUNNERS)}명 {action} 예정. 실제로 쓰려면 --yes를 붙이세요.")
+        return
     try:
         if args.remove:
             print(f"데모 러너 {remove(engine)}명과 그 기록을 지웠어요.")

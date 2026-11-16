@@ -125,6 +125,12 @@ class LeaderboardResponse(BaseModel):
     entries: list[LeaderboardEntry]
 
 
+class TerritoryResponse(BaseModel):
+    resolution: int
+    total: int
+    cells: list[str]
+
+
 class ActivityArea(BaseModel):
     """약 2km 격자 칸의 중심 좌표와 그 칸을 지난 GPS 러닝 수."""
 

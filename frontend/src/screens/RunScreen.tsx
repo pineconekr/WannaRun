@@ -5,6 +5,7 @@ import { pace, readRecords, recordKey, saveRecord } from '../services/runRecords
 import { getRunningRecords, saveRunningRecord, updateRunningRecord, type RunRecord } from '../services/api';
 import { ApiError, authRequest } from '../services/auth';
 import type { Claim } from '../services/territory';
+import { syncTerritory } from '../services/territorySync';
 import { formatGap, formatKm, formatRunDate, runTitle } from '../services/format';
 import { HAPTIC, buzz } from '../services/haptics';
 import { RunStats } from '../components/RunStats';
@@ -164,6 +165,8 @@ export default function RunScreen({ onHistory, startRequest, onStatusChange, vis
           await updateRunningRecord(stored.id, metadata, token);
         }
         window.dispatchEvent(new Event('wannarun:records'));
+        // 서버가 확정한 영토로 화면을 맞춥니다. 실패해도 방금 계산한 영토가 그대로 보입니다.
+        syncTerritory(token).catch(() => { /* 다음에 앱을 열 때 다시 불러옵니다. */ });
         if (savingRun.current !== result.id) return;
         setResult(current => current?.id === result.id ? { ...current, serverId: stored.id } : current);
         if (impact && result.source === 'gps' && (impact.before === null || impact.after < impact.before)) buzz(HAPTIC.rankPassed);

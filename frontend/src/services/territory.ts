@@ -1,221 +1,150 @@
-// 땅따먹기: 러닝 경로가 지나간 육각형 칸을 영토로 저장합니다.
-// 영토는 이 브라우저에만 저장되며, 표시 여부와 무관하게 지우는 경로는 clearTerritory 하나뿐입니다.
+// 땅따먹기: 러닝 경로가 지나간 H3 칸(해상도 11, 변 약 29m)을 영토로 보여줍니다.
+// 로그인하면 서버(GET /users/me/territory)가 정본이고, 로그인 없이 둘러보는 동안만 이 브라우저에 저장합니다.
+// 달리는 동안의 실시간 표시와 결과 화면은 서버(backend/territory.py)와 같은 알고리즘으로 미리 계산합니다.
 import { useSyncExternalStore } from 'react';
+import { cellToBoundary, greatCircleDistance, gridPathCells, isValidCell, latLngToCell } from 'h3-js';
+// 서버와 주고받는 코드는 territorySync.ts에 있습니다.
 
 export type Position = [number, number];
 export type TerritoryCell = { positions: Position[] };
+/** H3 칸 ID → 꼭짓점. */
 export type Territory = Record<string, TerritoryCell>;
-/** 한 번의 러닝 결과: 이번에 지나간 칸, 그중 새로 차지한 칸(경로 순서), 전체 영토 칸 수. */
-/** 한 번의 러닝 결과: 이번에 지나간 칸, 그중 새로 차지한 칸(경로 순서), 전체 영토 칸 수, 기기 저장 성공 여부. */
+/** 한 번의 러닝 결과: 이번에 지나간 칸, 그중 새로 차지한 칸(경로 순서), 전체 영토 칸 수, 저장 성공 여부. */
 export type Claim = { cells: Territory; added: string[]; total: number; saved: boolean };
 
-// v3은 칸 키("q:r") 목록만 저장하고 꼭짓점은 불러올 때 다시 계산합니다.
-const STORAGE_KEY = 'wannarun-captured-territories-v3';
-const V2_STORAGE_KEY = 'wannarun-captured-territories-v2';
-const V1_STORAGE_KEY = 'wannarun-captured-territories-v1';
-const CHANGE_EVENT = 'wannarun:territory';
-const HEX_RADIUS_METERS = 35;
-const SAMPLE_DISTANCE_METERS = 10;
-const EARTH_RADIUS_METERS = 6_378_137;
+/** 서버의 H3_RESOLUTION, MAX_GAP_METERS와 같아야 합니다. */
+export const H3_RESOLUTION = 11;
+const MAX_GAP_METERS = 1000;
+const GUEST_STORAGE_KEY = 'wannarun-guest-territory-h3-v1';
 
-function toMercator([latitude, longitude]: Position): [number, number] {
-  const clampedLatitude = Math.max(-85.05112878, Math.min(85.05112878, latitude));
-  const latitudeRadians = (clampedLatitude * Math.PI) / 180;
-  const longitudeRadians = (longitude * Math.PI) / 180;
-  return [
-    EARTH_RADIUS_METERS * longitudeRadians,
-    EARTH_RADIUS_METERS * Math.log(Math.tan(Math.PI / 4 + latitudeRadians / 2)),
-  ];
+const boundaries = new Map<string, TerritoryCell>();
+
+function cellAt(id: string): TerritoryCell {
+  let cell = boundaries.get(id);
+  if (!cell) {
+    cell = { positions: cellToBoundary(id) as Position[] };
+    boundaries.set(id, cell);
+  }
+  return cell;
 }
 
-function fromMercator(x: number, y: number): Position {
-  const longitude = (x / EARTH_RADIUS_METERS) * (180 / Math.PI);
-  const latitude = (2 * Math.atan(Math.exp(y / EARTH_RADIUS_METERS)) - Math.PI / 2) * (180 / Math.PI);
-  return [latitude, longitude];
+function fromIds(ids: Iterable<string>): Territory {
+  const territory: Territory = {};
+  for (const id of ids) territory[id] = cellAt(id);
+  return territory;
 }
 
-function cubeRound(q: number, r: number): [number, number] {
-  const x = q;
-  const z = r;
-  const y = -x - z;
-  let roundedX = Math.round(x);
-  let roundedY = Math.round(y);
-  let roundedZ = Math.round(z);
-  const xDifference = Math.abs(roundedX - x);
-  const yDifference = Math.abs(roundedY - y);
-  const zDifference = Math.abs(roundedZ - z);
-
-  if (xDifference > yDifference && xDifference > zDifference) roundedX = -roundedY - roundedZ;
-  else if (yDifference > zDifference) roundedY = -roundedX - roundedZ;
-  else roundedZ = -roundedX - roundedY;
-
-  return [roundedX, roundedZ];
-}
-
-function hexCellAt(q: number, r: number): [string, TerritoryCell] {
-  const centerX = Math.sqrt(3) * HEX_RADIUS_METERS * (q + r / 2);
-  const centerY = 1.5 * HEX_RADIUS_METERS * r;
-  const positions: Position[] = Array.from({ length: 6 }, (_, index) => {
-    const angle = ((60 * index - 30) * Math.PI) / 180;
-    return fromMercator(
-      centerX + HEX_RADIUS_METERS * Math.cos(angle),
-      centerY + HEX_RADIUS_METERS * Math.sin(angle),
-    );
-  });
-  return [`${q}:${r}`, { positions }];
-}
-
-function hexKey(position: Position): [number, number] {
-  const [x, y] = toMercator(position);
-  return cubeRound(
-    (Math.sqrt(3) / 3 * x - y / 3) / HEX_RADIUS_METERS,
-    (2 / 3 * y) / HEX_RADIUS_METERS,
-  );
-}
-
-/** 경로가 지나간 칸을 처음 지난 순서대로 돌려줍니다. */
+/** 경로가 지나간 칸을 처음 지난 순서대로 돌려줍니다. 서버의 cells_along과 같은 규칙입니다. */
 export function cellsAlong(segments: Position[][]): Territory {
-  const cells: Territory = {};
-  const add = (position: Position) => {
-    const [q, r] = hexKey(position);
-    const key = `${q}:${r}`;
-    // 같은 칸을 여러 번 지나도 꼭짓점은 처음 한 번만 계산합니다.
-    if (!(key in cells)) cells[key] = hexCellAt(q, r)[1];
-  };
-
+  const ids = new Set<string>();
   for (const route of segments) {
-    if (route.length === 1) add(route[0]);
-    for (let index = 1; index < route.length; index += 1) {
-      const start = toMercator(route[index - 1]);
-      const end = toMercator(route[index]);
-      const distance = Math.hypot(end[0] - start[0], end[1] - start[1]);
-      const sampleCount = Math.max(1, Math.ceil(distance / SAMPLE_DISTANCE_METERS));
-      for (let sample = 0; sample <= sampleCount; sample += 1) {
-        const ratio = sample / sampleCount;
-        add(fromMercator(start[0] + (end[0] - start[0]) * ratio, start[1] + (end[1] - start[1]) * ratio));
+    let previous: string | null = null;
+    let previousPoint: Position | null = null;
+    for (const point of route) {
+      const current = latLngToCell(point[0], point[1], H3_RESOLUTION);
+      if (previous === null || previous === current) {
+        ids.add(current);
+      } else {
+        ids.add(previous);
+        let between = [current];
+        // 두 점이 너무 멀면 GPS 튐으로 보고 중간 칸을 채우지 않습니다.
+        if (greatCircleDistance(previousPoint!, point, 'm') <= MAX_GAP_METERS) {
+          try { between = gridPathCells(previous, current); } catch { /* 양 끝 칸만 남깁니다. */ }
+        }
+        for (const id of between) ids.add(id);
       }
+      previous = current;
+      previousPoint = point;
     }
   }
-  return cells;
+  return fromIds(ids);
 }
 
-function fromKeys(keys: Iterable<string>): Territory {
-  const parsed: Territory = {};
-  for (const key of keys) {
-    const match = /^(-?\d+):(-?\d+)$/.exec(key);
-    if (match) parsed[key] = hexCellAt(Number(match[1]), Number(match[2]))[1];
-  }
-  return parsed;
-}
-
-function parse(raw: string): Territory {
-  const stored: unknown = JSON.parse(raw);
-  return Array.isArray(stored) ? fromKeys(stored.filter((key): key is string => typeof key === 'string')) : {};
-}
-
-/** v2(칸 키 → 꼭짓점)와 v1(사각 격자 bounds)을 v3 키 목록으로 옮깁니다. */
-function migrate(v2: string | null, v1: string | null): string[] {
-  const keys = new Set<string>();
-  if (v2 !== null) Object.keys(JSON.parse(v2) as Record<string, unknown>).forEach(key => keys.add(key));
-  if (v1 !== null) {
-    Object.values(JSON.parse(v1) as Record<string, { bounds?: [[number, number], [number, number]] }>).forEach(cell => {
-      if (!cell?.bounds) return;
-      // v1은 사각 격자였으므로 중심이 속한 육각형으로 옮깁니다.
-      const [[south, west], [north, east]] = cell.bounds;
-      const [q, r] = hexKey([(south + north) / 2, (west + east) / 2]);
-      keys.add(`${q}:${r}`);
-    });
-  }
-  return [...keys];
-}
-
+// --- 저장소: 계정이면 서버에서 받은 값을 메모리에, 게스트면 localStorage에 둡니다. ---
 const empty: Territory = {};
-let cache: { raw: string | null; value: Territory } = { raw: null, value: empty };
-// 저장에 실패한 영토는 저장소의 예전 값보다 우선합니다.
-let unsaved = false;
+const listeners = new Set<() => void>();
+let mode: 'guest' | 'account' = 'guest';
+let guestLoaded = false;
+let current: Territory = empty;
+
+function emit() { listeners.forEach(listener => listener()); }
+
+function loadGuest() {
+  guestLoaded = true;
+  try {
+    const raw = window.localStorage.getItem(GUEST_STORAGE_KEY);
+    const stored: unknown = raw === null ? [] : JSON.parse(raw);
+    current = Array.isArray(stored)
+      ? fromIds(stored.filter((id): id is string => typeof id === 'string' && isValidCell(id)))
+      : empty;
+  } catch {
+    current = empty;
+  }
+}
+
+function saveGuest(territory: Territory): boolean {
+  try {
+    window.localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(Object.keys(territory)));
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function snapshot(): Territory {
-  if (unsaved) return cache.value;
-  let raw: string | null = null;
-  try {
-    raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw === null) {
-      const v2 = window.localStorage.getItem(V2_STORAGE_KEY);
-      const v1 = window.localStorage.getItem(V1_STORAGE_KEY);
-      if (v2 !== null || v1 !== null) {
-        try {
-          raw = JSON.stringify(migrate(v2, v1));
-        } catch {
-          raw = null;
-        }
-        if (raw !== null) {
-          window.localStorage.setItem(STORAGE_KEY, raw);
-          window.localStorage.removeItem(V2_STORAGE_KEY);
-          window.localStorage.removeItem(V1_STORAGE_KEY);
-        }
-      }
-    }
-  } catch {
-    // 저장 공간을 읽거나 옮겨 쓸 수 없으면 현재 화면에 남은 영토를 그대로 씁니다.
-    if (raw !== null && raw !== cache.raw) {
-      try { cache = { raw, value: parse(raw) }; } catch { /* 이전 값 유지 */ }
-    }
-    return cache.value;
-  }
-  if (raw === cache.raw) return cache.value;
-  try {
-    cache = { raw, value: raw === null ? empty : parse(raw) };
-  } catch {
-    cache = { raw, value: empty };
-  }
-  return cache.value;
+  if (mode === 'guest' && !guestLoaded) loadGuest();
+  return current;
 }
 
 function subscribe(onChange: () => void) {
-  const onStorage = (event: StorageEvent) => { if (event.key === null || event.key === STORAGE_KEY) onChange(); };
-  window.addEventListener(CHANGE_EVENT, onChange);
-  window.addEventListener('storage', onStorage);
-  return () => {
-    window.removeEventListener(CHANGE_EVENT, onChange);
-    window.removeEventListener('storage', onStorage);
-  };
+  listeners.add(onChange);
+  return () => { listeners.delete(onChange); };
 }
 
 export function useTerritory(): Territory {
   return useSyncExternalStore(subscribe, snapshot, () => empty);
 }
 
-/** 이번 러닝의 경로를 영토에 더하고, 새로 차지한 칸을 돌려줍니다. */
+/** 게스트 영토(이 브라우저에 저장한 것)를 보여줍니다. */
+export function enterGuestMode() {
+  mode = 'guest';
+  guestLoaded = false;
+  current = empty;
+  emit();
+}
+
+/** 계정 화면으로 바꿉니다. 서버 값이 올 때까지는 비워 둬서 게스트 영토가 계정에 비치지 않게 합니다. */
+export function enterAccountMode() {
+  if (mode === 'account') return;
+  mode = 'account';
+  current = empty;
+  emit();
+}
+
+/** 서버가 확정한 내 영토로 화면을 바꿉니다. */
+export function setAccountCells(ids: string[]) {
+  mode = 'account';
+  current = fromIds(ids);
+  emit();
+}
+
+/** 이번 러닝의 경로를 화면의 영토에 더하고, 새로 차지한 칸을 돌려줍니다. 계정 영토는 러닝을 저장할 때 서버가 확정합니다. */
 export function claimTerritory(segments: Position[][]): Claim {
-  const current = snapshot();
+  const before = snapshot();
   const visited = cellsAlong(segments);
-  const added = Object.keys(visited).filter(key => !(key in current));
-  const next = { ...current, ...visited };
-  const raw = JSON.stringify(Object.keys(next));
-  let saved = true;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, raw);
-    unsaved = false;
-  } catch {
-    // 저장하지 못해도 이번 실행 중에는 지도에 표시합니다.
-    unsaved = true;
-    saved = false;
-  }
-  cache = { raw, value: next };
-  window.dispatchEvent(new Event(CHANGE_EVENT));
+  const added = Object.keys(visited).filter(id => !(id in before));
+  const next = { ...before, ...visited };
+  const saved = mode === 'account' ? true : saveGuest(next);
+  current = next;
+  emit();
   return { cells: visited, added, total: Object.keys(next).length, saved };
 }
 
-export function clearTerritory() {
-  try {
-    window.localStorage.removeItem(STORAGE_KEY);
-    window.localStorage.removeItem(V2_STORAGE_KEY);
-    window.localStorage.removeItem(V1_STORAGE_KEY);
-    unsaved = false;
-  } catch {
-    // 저장 공간을 쓸 수 없어도 화면의 영토는 비웁니다.
-    unsaved = true;
+/** 화면의 영토를 비웁니다. 게스트면 이 브라우저에 저장한 것도 지웁니다. 서버의 영토는 건드리지 않습니다. */
+export function clearLocalTerritory() {
+  if (mode === 'guest') {
+    try { window.localStorage.removeItem(GUEST_STORAGE_KEY); } catch { /* 화면의 영토는 아래에서 비웁니다. */ }
   }
-  cache = { raw: null, value: empty };
-  window.dispatchEvent(new Event(CHANGE_EVENT));
+  current = empty;
+  emit();
 }

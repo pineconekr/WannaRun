@@ -119,7 +119,7 @@ def test_new_database_migration_is_rerunnable_and_creates_constraints():
         migrate(engine)
         migrate(engine)
         inspector = inspect(engine)
-        assert set(inspector.get_table_names()) == {"users", "auth_sessions", "runs"}
+        assert set(inspector.get_table_names()) == {"users", "auth_sessions", "runs", "territory_cells"}
         checks = {check["name"] for check in inspector.get_check_constraints("runs")}
         assert "ck_runs_source" in checks
         indexes = {index["name"] for index in inspector.get_indexes("runs")}

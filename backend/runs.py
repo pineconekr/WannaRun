@@ -18,6 +18,7 @@ from sqlalchemy.exc import IntegrityError
 from backend.auth import CurrentSession, Db
 from backend.models import Run
 from backend.schemas import RunCreate, RunPatch, RunResponse
+from backend.territory import claim_run
 
 router = APIRouter(prefix="/api/runs", tags=["러닝 기록"])
 
@@ -42,6 +43,9 @@ def create_run(data: RunCreate, response: Response, db: Db, session: CurrentSess
         run.id = run_id
     db.add(run)
     try:
+        # 기록과 영토를 한 트랜잭션으로 저장해 둘이 어긋나지 않게 합니다.
+        db.flush()
+        claim_run(db, run)
         db.commit()
     except IntegrityError:
         db.rollback()

@@ -21,6 +21,13 @@
 | `frontend` | React + Vite |
 | `backend` | FastAPI + PostgreSQL(Neon) |
 
+## 땅따먹기(영토)
+
+- 칸은 [H3](https://h3geo.org) 해상도 11 육각형(변 약 29m)입니다. 로그인하면 영토는 서버(`territory_cells` 테이블)에 저장되고, 로그인 없이 둘러볼 때만 이 브라우저에 저장됩니다.
+- 러닝을 계정에 저장(`POST /api/runs`)하면 서버가 같은 트랜잭션에서 경로가 지나간 칸을 계산해 저장합니다(50m 미만 러닝은 제외). 내 영토는 `GET /api/users/me/territory`, 지우기는 `DELETE`(러닝 기록은 유지)입니다.
+- 달리는 동안의 실시간 표시는 프론트(`frontend/src/services/territory.ts`)가 서버(`backend/territory.py`)와 같은 규칙으로 미리 계산합니다. 두 구현은 `frontend/tests/territory-golden.json`으로 같은 칸을 고르는지 양쪽 테스트가 검사하니, 규칙을 바꿀 때는 둘을 함께 고치세요.
+- 기존 러닝 기록으로 영토를 다시 만들려면 `uv run python -m backend.backfill_territory --yes`를 실행합니다.
+
 ## 로컬 실행
 
 처음 한 번:
@@ -44,16 +51,16 @@ npm.cmd run dev
 ```
 
 http://localhost:5173 접속.
-로컬 계정은 `backend/auth-test.sqlite3`에 저장되며 배포 DB와 별개입니다.
+개발·배포 모두 공유 Neon DB를 사용합니다. `backend/.env.example`을 `backend/.env`로 복사해 `DATABASE_URL`(`postgresql+psycopg://...`)을 설정해야 API가 동작합니다.
 
 시연용 데모 러너 7명과 GPS 기록(최근 5주)을 넣거나 지우기:
 
 ```powershell
-uv run python -m backend.seed_demo --sqlite backend/auth-test.sqlite3 --password <8자 이상>
-uv run python -m backend.seed_demo --sqlite backend/auth-test.sqlite3 --remove
+uv run python -m backend.seed_demo --password <8자 이상> --yes
+uv run python -m backend.seed_demo --remove --yes
 ```
 
-Neon에는 `DATABASE_URL`을 설정하고 `--yes`를 붙여 실행합니다(없으면 대상만 출력). 데모 기록은 랭킹에 실제 기록처럼 집계되므로 운영 DB 대신 Neon 시연용 브랜치를 권장합니다.
+`--yes`가 없으면 대상 DB만 출력하고 종료합니다. 데모 기록은 랭킹에 실제 기록처럼 집계되므로 공유 DB에 넣을 때 주의하세요.
 
 ## API
 

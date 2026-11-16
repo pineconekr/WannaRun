@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ApiError, NetworkError, UNAUTHORIZED_EVENT, authRequest, type User } from '../services/auth';
+import { syncTerritory } from '../services/territorySync';
 
 type Auth = {
   user: User | null; token: string | null; loading: boolean; error: string;
@@ -58,6 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [token, attempt]);
+  // 로그인하면 계정의 영토를, 로그아웃하면 게스트 영토를 보여줍니다. 영토를 못 불러와도 앱은 계속 동작합니다.
+  useEffect(() => { syncTerritory(token).catch(() => { /* 프로필·홈에서 다시 열면 다시 불러옵니다. */ }); }, [token]);
   async function login(username: string, password: string) {
     const result = await authRequest<{ access_token: string }>('/auth/login', {
       method: 'POST', body: JSON.stringify({ username, password }),

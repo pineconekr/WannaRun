@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AuthScreen from './AuthScreen';
 import { useAuth } from '../components/AuthProvider';
 import { authRequest } from '../services/auth';
-import { clearTerritory, useTerritory, type Territory } from '../services/territory';
+import { useTerritory, type Territory } from '../services/territory';
+import { clearTerritory } from '../services/territorySync';
 import { RunStats } from '../components/RunStats';
 import TerritoryMap from '../components/map/TerritoryMap';
 import { CellCount, InlineConfirm, RetryError } from '../components/ui';
@@ -13,15 +14,13 @@ import { readRecords, recordKey, type SavedRun } from '../services/runRecords';
 
 type PersonalStats = { total_distance_m: number; total_duration_s: number; run_count: number };
 
-function TerritorySection({ territory }: { territory: Territory }) {
-  const cells = Object.values(territory);
-  const cellCount = cells.length;
-  const latitude = cells[0]?.positions[0]?.[0];
-  const pitches = latitude === undefined ? null : territoryPitches(cellCount, latitude);
+function TerritorySection({ territory, account }: { territory: Territory; account: boolean }) {
+  const cellCount = Object.keys(territory).length;
+  const pitches = cellCount > 0 ? territoryPitches(cellCount) : null;
   return <section aria-labelledby="territory-title">
     <h2 id="territory-title" className="wr-section-title">내 영토 <CellCount value={cellCount} className="wr-profile-cells" /></h2>
     {pitches && <p className="wr-muted wr-profile-pitches">{pitches}</p>}
-    <p className="wr-description">영토는 이 기기에만 저장돼요.</p>
+    <p className="wr-description">{account ? '영토는 내 계정에 저장돼요. 계정에 저장한 GPS 러닝이 지나간 칸이 쌓여요.' : '로그인하지 않으면 영토는 이 기기에만 저장돼요.'}</p>
     {cellCount > 0
       ? <TerritoryMap className="wr-profile-map" cells={territory} label={`내 영토 ${cellCount}칸을 표시한 지도`} />
       : <p className="wr-description">러닝을 마치면 지나간 길 주변 칸이 여기에 쌓여요.</p>}
@@ -198,7 +197,7 @@ export default function ProfileScreen() {
       <button type="button" className="wr-primary-button" onClick={retry}>다시 시도</button>
     </section>;
     return <>
-      <div className="wr-page wr-profile wr-guest-territory"><TerritorySection territory={territory} /></div>
+      <div className="wr-page wr-profile wr-guest-territory"><TerritorySection territory={territory} account={false} /></div>
       <AuthScreen />
     </>;
   }
@@ -215,7 +214,7 @@ export default function ProfileScreen() {
         <p className="wr-muted">{tagline}</p>
       </div>
     </div>
-    <TerritorySection territory={territory} />
+    <TerritorySection territory={territory} account />
     <section aria-labelledby="personal-stats-title">
       <h2 id="personal-stats-title" className="wr-section-title">나의 누적 러닝</h2>
       {statsError ? <RetryError message={statsError} onRetry={() => setAttempt(value => value + 1)} />
@@ -230,7 +229,10 @@ export default function ProfileScreen() {
     {error && <p className="wr-error" role="alert">{error}</p>}
     {confirmClear && <InlineConfirm tone="danger" message={`영토 ${cellCount.toLocaleString('ko-KR')}칸을 모두 지울까요? 되돌릴 수 없어요.`}
       cancelLabel="취소" confirmLabel="모두 지우기" onCancel={() => setConfirmClear(false)}
-      onConfirm={() => { clearTerritory(); setConfirmClear(false); }} />}
+      onConfirm={() => {
+        setConfirmClear(false);
+        clearTerritory(token).catch(reason => setError(reason instanceof Error ? reason.message : '영토를 지우지 못했어요. 다시 시도해 주세요.'));
+      }} />}
     <div className="wr-profile-footer">
       <button type="button" className="wr-text-button" disabled={busy} onClick={() => void signOut()}>{busy ? '로그아웃 중…' : '로그아웃'}</button>
       {cellCount > 0 && !confirmClear && <button type="button" className="wr-text-button wr-clear-button" onClick={() => setConfirmClear(true)}>영토 기록 지우기</button>}

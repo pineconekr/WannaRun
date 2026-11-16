@@ -163,9 +163,8 @@ const HomeTab = forwardRef<HTMLElement, Props>(function HomeTab({ runStatus, onS
   const { user } = useAuth();
   const { week, error, retry } = useWeek();
   const territory = useTerritory();
-  const cellIds = Object.keys(territory);
-  const cellCount = cellIds.length;
-  const pitches = cellCount > 0 ? territoryPitches(cellCount, territory[cellIds[0]].positions[0]?.[0] ?? 0) : null;
+  const cellCount = Object.keys(territory).length;
+  const pitches = cellCount > 0 ? territoryPitches(cellCount) : null;
   const around = user && week?.standings ? neighbours(week.standings, user.id) : null;
   const nextBusanEvent = getUpcomingBusanEvents()[0];
   const startLabel = runStatus === 'active' ? '달리는 중 · 화면으로 돌아가기' : runStatus === 'result' ? '저장하지 않은 결과 보기' : 'GPS 러닝 시작';

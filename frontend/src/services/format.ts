@@ -38,14 +38,13 @@ export function runTitle(iso: string): string {
   return `${WEEKDAYS[date.getDay()]}요일 ${slot} 러닝`;
 }
 
-// 영토 칸은 웹 메르카토르에서 반경 35m 육각형이라 실제 넓이는 위도에 따라 cos²(위도)만큼 줄어듭니다.
-const HEX_RADIUS_METERS = 35;
-const HEX_MERCATOR_AREA_M2 = (3 * Math.sqrt(3) / 2) * HEX_RADIUS_METERS ** 2;
+// 영토 칸은 H3 해상도 11 육각형이고 평균 넓이는 약 2,150㎡입니다(위치와 무관하게 거의 일정).
+const H3_CELL_AREA_M2 = 2150;
 const FOOTBALL_PITCH_M2 = 105 * 68;
 
 /** 영토 넓이를 축구장 개수로: "축구장 약 12개 넓이". 1개 미만이면 null. */
-export function territoryPitches(cellCount: number, latitude: number): string | null {
-  const area = cellCount * HEX_MERCATOR_AREA_M2 * Math.cos(latitude * Math.PI / 180) ** 2;
+export function territoryPitches(cellCount: number): string | null {
+  const area = cellCount * H3_CELL_AREA_M2;
   const pitches = Math.round(area / FOOTBALL_PITCH_M2);
   return pitches >= 1 ? `축구장 약 ${pitches.toLocaleString('ko-KR')}개 넓이` : null;
 }

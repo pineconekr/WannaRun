@@ -1,9 +1,8 @@
-"""Additive schema upgrade for PostgreSQL and local SQLite, preserving accounts/runs.
+"""Additive schema upgrade for PostgreSQL (Neon), preserving accounts/runs.
 
-Production: set DATABASE_URL and run ``uv run python -m backend.migrate`` (or
-``backend.init_db``). Local SQLite: ``uv run python -m backend.migrate --sqlite
-backend/auth-test.sqlite3``. Stop local writers during upgrades. Rerunning is safe;
-no tables or records are dropped/rebuilt. Back up the database before upgrades.
+Set DATABASE_URL and run ``uv run python -m backend.migrate`` (or
+``backend.init_db``). Rerunning is safe; no tables or records are
+dropped/rebuilt. Back up the database before upgrades.
 
 Existing records are classified as legacy because historical demo/GPS provenance
 cannot be established. The SQL source default remains legacy for unclassified
@@ -13,9 +12,8 @@ periods use the start timestamp and UTC Monday/month boundaries, end-exclusive.
 """
 
 import argparse
-from pathlib import Path
 
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.schema import CreateColumn
 
@@ -50,16 +48,11 @@ def migrate(engine: Engine) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--sqlite", type=Path, help="Upgrade this local SQLite file")
-    args = parser.parse_args()
-    if args.sqlite is not None:
-        engine = create_engine(f"sqlite:///{args.sqlite.resolve().as_posix()}")
-    else:
-        from backend.database import engine
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    from backend.database import engine
 
-        if engine is None:
-            raise RuntimeError("DATABASE_URL 설정 필요 (또는 --sqlite 파일 경로).")
+    if engine is None:
+        raise RuntimeError("DATABASE_URL 설정 필요.")
     try:
         migrate(engine)
         print("스키마 준비 완료: 계정·기존 기록 유지")
