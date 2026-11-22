@@ -21,6 +21,7 @@
   .wr-route.is-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
 }
 .wr-claim-copy p { margin: 6px 0 0; color: var(--wr-muted); font-size: 15px; }
+.wr-claim-copy p.wr-claim-stolen { color: var(--wr-rival-ink); font-weight: 600; }
 .wr-result .wr-form { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--wr-border); }
 .wr-result .wr-success + .wr-primary-button { margin-top: 12px; }
 

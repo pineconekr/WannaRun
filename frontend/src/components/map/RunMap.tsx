@@ -2,9 +2,10 @@
 import React, { useEffect } from 'react';
 import { Circle, CircleMarker, MapContainer, Polyline, Popup, useMap, useMapEvents } from 'react-leaflet';
 import TerritoryLayer from './TerritoryLayer';
+import RivalLoader from './RivalLoader';
 import { DEFAULT_CENTER, MAX_ZOOM, MapTiles } from './MapTiles';
 import { HexIcon } from '../ui';
-import type { Position, Territory } from '../../services/territory';
+import { useRivalTerritory, type Position, type Territory } from '../../services/territory';
 
 /** 위치가 가운데 영역을 벗어날 때만 따라갑니다. 화면 밖이면 바로 옮기고, GPS는 부드럽게 미끄러집니다. */
 function MapViewport({ position, smooth, route, showPlan }: { position: Position | null; smooth: boolean; route: Position[]; showPlan: boolean }) {
@@ -56,6 +57,7 @@ function RunMap({
   selecting, onPick, onUndo, segments, position, accuracy, smooth,
 }: Props) {
   const last = route.length - 1;
+  const rivals = useRivalTerritory();
   // className·interactive는 Leaflet 생성 옵션이라 pathOptions가 아닌 prop으로 넘겨야 실제 SVG에 붙습니다.
   return <div className="wr-map-card wr-run-map">
     <div className="wr-tracker-map">
@@ -63,7 +65,8 @@ function RunMap({
         <MapViewport position={position} smooth={smooth} route={route} showPlan={showPlan} />
         <RoutePicker enabled={selecting} onPick={onPick} />
         <MapTiles />
-        {showTerritory && <TerritoryLayer cells={cells} fresh={fresh} />}
+        <RivalLoader />
+        {showTerritory && <TerritoryLayer cells={cells} fresh={fresh} rivals={rivals} />}
         {showPlan && route.length > 1 && <Polyline positions={route} className="wr-route is-plan" interactive={false} />}
         {showWaypoints && route.map((p, i) => <CircleMarker key={`${i}:${i === 0 ? 's' : i === last ? 'e' : 'm'}`} center={p} radius={i === 0 || i === last ? 8 : 6}
           className={i === 0 ? 'wr-waypoint is-start' : 'wr-waypoint'}>

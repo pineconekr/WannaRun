@@ -20,6 +20,10 @@ class User(Base):
     )
     username: Mapped[str] = mapped_column(String(20), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
+    # "내 영토 지우기"를 누른 시각. 이보다 먼저 시작한 러닝은 다시 영토가 되지 않습니다.
+    territory_cleared_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
 
 class AuthSession(Base):
@@ -33,7 +37,11 @@ class AuthSession(Base):
 
 
 class TerritoryCell(Base):
-    """사용자가 지나간 H3 칸(해상도 11). 사용자당 칸 하나는 한 행입니다."""
+    """사용자가 지나간 H3 칸(해상도 11). 사용자당 칸 하나는 한 행입니다.
+
+    지금 누가 그 칸을 가졌는지는 TerritoryOwner가 정합니다. 이 표는 "내가 지나간 칸" 기록이라
+    다른 러너에게 빼앗겨도 남고, 빼앗긴 칸 수를 세는 데 씁니다.
+    """
 
     __tablename__ = "territory_cells"
 
@@ -45,6 +53,27 @@ class TerritoryCell(Base):
         ForeignKey("runs.id", ondelete="SET NULL"), default=None
     )
     captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class TerritoryOwner(Base):
+    """칸마다 지금 주인 한 명. 그 칸을 지나간 가장 최근 러닝(시작 시각, 같으면 러닝 ID 순)의 주인이 가집니다."""
+
+    __tablename__ = "territory_owners"
+    __table_args__ = (
+        Index("ix_territory_owners_user", "user_id"),
+        Index("ix_territory_owners_lat_lng", "lat", "lng"),
+    )
+
+    cell_id: Mapped[str] = mapped_column(String(15), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    run_id: Mapped[str | None] = mapped_column(
+        ForeignKey("runs.id", ondelete="SET NULL"), default=None
+    )
+    # 주인을 정한 러닝의 시작 시각. 이보다 늦게 시작한 러닝만 칸을 빼앗을 수 있습니다.
+    captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # 칸 중심 좌표. 지도 영역 조회에 씁니다.
+    lat: Mapped[float] = mapped_column(Float)
+    lng: Mapped[float] = mapped_column(Float)
 
 
 class Run(Base):

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AuthScreen from './AuthScreen';
 import { useAuth } from '../components/AuthProvider';
 import { authRequest } from '../services/auth';
-import { useTerritory, type Territory } from '../services/territory';
+import { useLostCount, useTerritory, type Territory } from '../services/territory';
 import { clearTerritory } from '../services/territorySync';
 import { RunStats } from '../components/RunStats';
 import TerritoryMap from '../components/map/TerritoryMap';
@@ -16,13 +16,18 @@ type PersonalStats = { total_distance_m: number; total_duration_s: number; run_c
 
 function TerritorySection({ territory, account }: { territory: Territory; account: boolean }) {
   const cellCount = Object.keys(territory).length;
+  const lost = useLostCount();
   const pitches = cellCount > 0 ? territoryPitches(cellCount) : null;
   return <section aria-labelledby="territory-title">
     <h2 id="territory-title" className="wr-section-title">내 영토 <CellCount value={cellCount} className="wr-profile-cells" /></h2>
     {pitches && <p className="wr-muted wr-profile-pitches">{pitches}</p>}
-    <p className="wr-description">{account ? '영토는 내 계정에 저장돼요. 계정에 저장한 GPS 러닝이 지나간 칸이 쌓여요.' : '로그인하지 않으면 영토는 이 기기에만 저장돼요.'}</p>
+    <p className="wr-description">{account
+      ? '영토는 내 계정에 저장돼요. 다른 러너가 내 칸을 더 늦게 지나가면 그 칸을 빼앗겨요. 다시 달리면 되찾을 수 있어요.'
+      : '로그인하지 않으면 영토는 이 기기에만 저장되고, 다른 러너와 겨루지 않아요.'}</p>
+    {account && lost > 0 && <p className="wr-muted">다른 러너에게 빼앗긴 칸 {lost.toLocaleString('ko-KR')}칸</p>}
     {cellCount > 0
-      ? <TerritoryMap className="wr-profile-map" cells={territory} label={`내 영토 ${cellCount}칸을 표시한 지도`} />
+      ? <TerritoryMap className="wr-profile-map" cells={territory} showRivals={account}
+        label={`내 영토 ${cellCount}칸${account ? '과 주변 다른 러너의 칸' : ''}을 표시한 지도`} />
       : <p className="wr-description">러닝을 마치면 지나간 길 주변 칸이 여기에 쌓여요.</p>}
   </section>;
 }
@@ -227,7 +232,7 @@ export default function ProfileScreen() {
     </section>
     <ProfileActivities key={user.id} userId={user.id} token={token} />
     {error && <p className="wr-error" role="alert">{error}</p>}
-    {confirmClear && <InlineConfirm tone="danger" message={`영토 ${cellCount.toLocaleString('ko-KR')}칸을 모두 지울까요? 되돌릴 수 없어요.`}
+    {confirmClear && <InlineConfirm tone="danger" message={`영토 ${cellCount.toLocaleString('ko-KR')}칸을 모두 지울까요? 지운 칸은 주인 없는 빈 칸이 되고, 지금까지의 러닝으로는 되찾을 수 없어요. 되돌릴 수 없어요.`}
       cancelLabel="취소" confirmLabel="모두 지우기" onCancel={() => setConfirmClear(false)}
       onConfirm={() => {
         setConfirmClear(false);

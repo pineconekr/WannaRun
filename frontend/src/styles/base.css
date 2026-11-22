@@ -16,6 +16,9 @@
   --wr-claim: #ff6a2b;
   --wr-claim-ink: #b23c0c;
   --wr-claim-tint: #ffeee3;
+  /* 다른 러너의 칸. 누구의 칸인지 구분하지 않고 귤색과 겹치지 않는 남색 한 가지로만 씁니다. */
+  --wr-rival: #4a5cc0;
+  --wr-rival-ink: #2c3a85;
   --wr-selection: #ffd4bd;
   --wr-night: #0d1a14;
   --wr-night-raise: #1a2c23;
@@ -149,6 +152,7 @@
 .wr-home .leaflet-popup-content { margin: 10px 14px; font-size: 14px; font-weight: 600; }
 
 .wr-hex { fill: var(--wr-claim); fill-opacity: .34; stroke: var(--wr-claim-ink); stroke-opacity: .6; stroke-width: 1.2; }
+.wr-hex.is-rival { fill: var(--wr-rival); fill-opacity: .22; stroke: var(--wr-rival-ink); stroke-opacity: .45; stroke-width: 1; }
 .wr-hex.is-new {
   fill-opacity: .72;
   stroke-opacity: 1;

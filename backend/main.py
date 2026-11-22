@@ -12,7 +12,7 @@ from backend.database import engine
 from backend.auth import router as auth_router
 from backend.runs import router as runs_router
 from backend.users import router as users_router
-from backend.territory import router as territory_router
+from backend.territory import area_router as territory_area_router, router as territory_router
 from backend.leaderboard import router as leaderboard_router
 
 FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
@@ -29,6 +29,7 @@ app = FastAPI(title="WannaRun API", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(territory_router)
+app.include_router(territory_area_router)
 app.include_router(runs_router)
 app.include_router(leaderboard_router)
 

@@ -210,7 +210,8 @@ const HomeTab = forwardRef<HTMLElement, Props>(function HomeTab({ runStatus, onS
       <h2 id="turf-title">내 영토 <CellCount className="wr-section-count" value={cellCount} /></h2>
       {pitches && <p className="wr-description">{pitches}</p>}
       {cellCount > 0
-        ? <TerritoryMap className="wr-week-map" cells={territory} label={`내 영토 ${cellCount}칸을 표시한 지도`} />
+        ? <TerritoryMap className="wr-week-map" cells={territory} showRivals={Boolean(user)}
+          label={`내 영토 ${cellCount}칸${user ? '과 주변 다른 러너의 칸' : ''}을 표시한 지도`} />
         : <TerritoryRules />}
     </section>
 

@@ -185,6 +185,7 @@ export default function RunScreen({ onHistory, startRequest, onStatusChange, vis
   }
 
   const added = claim?.added.length ?? 0;
+  const stolen = claim?.stolen.length ?? 0;
   const visited = claim ? Object.keys(claim.cells).length : 0;
   const count = useCountUp(added, mapReady);
   const toAccount = Boolean(token && !localCopy);
@@ -207,6 +208,7 @@ export default function RunScreen({ onHistory, startRequest, onStatusChange, vis
         <p>{firstTerritory ? '앞으로 달리는 길마다 영토가 넓어져요.'
           : milestone ? `영토 ${milestone.toLocaleString('ko-KR')}칸을 넘었어요 · 이제 ${claim.total.toLocaleString('ko-KR')}칸이에요.`
           : <>이제 내 영토는 <CellCount value={claim.total} />이에요.</>}</p>
+        {stolen > 0 && <p className="wr-claim-stolen">그중 {stolen.toLocaleString('ko-KR')}칸은 다른 러너에게서 빼앗았어요.{toAccount ? '' : ' 계정에 저장해야 내 땅이 돼요.'}</p>}
       </> : <>
         <h2 id="claim-title">이번엔 새로 차지한 칸이 없어요</h2>
         <p>{visited ? `지나간 ${visited.toLocaleString('ko-KR')}칸이 모두 이미 내 땅이었어요. 다음엔 한 블록 옆길로 달려 보세요.`

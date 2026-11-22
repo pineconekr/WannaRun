@@ -114,6 +114,7 @@
 .wr-live-claim dd.is-zero { color: var(--wr-night-muted); }
 .wr-live-claim dd.is-up { transform-origin: 0 80%; animation: wr-tick .32s var(--wr-ease); }
 @keyframes wr-tick { from { transform: scale(1.22); } }
+.wr-live-claim dd.wr-live-stolen { margin-top: 2px; color: var(--wr-night-muted); font-family: var(--wr-font); font-size: 13px; font-weight: 600; }
 /* 이번 주 다음 순위까지: 영토가 아니라 남과의 거리라 귤색을 쓰지 않습니다. */
 .wr-chase { margin-top: 18px; }
 .wr-chase-label { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0; font-size: 15px; font-weight: 700; }

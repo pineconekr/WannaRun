@@ -3,8 +3,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Polyline, useMap } from 'react-leaflet';
 import { latLngBounds, type LeafletEvent, type Path } from 'leaflet';
 import TerritoryLayer from './TerritoryLayer';
+import RivalLoader from './RivalLoader';
 import { DEFAULT_CENTER, MAX_ZOOM, MapTiles } from './MapTiles';
-import type { Position, Territory } from '../../services/territory';
+import { useRivalTerritory, type Position, type Territory } from '../../services/territory';
 
 function FitToContent({ points }: { points: Position[] }) {
   const map = useMap();
@@ -29,7 +30,11 @@ type Props = {
   className?: string;
   /** 바탕 타일이 그려져 영토 등장 모션이 시작될 때 한 번 불립니다. */
   onReady?: () => void;
+  /** 로그인했으면 이 지도 영역 안의 다른 러너 칸도 함께 그립니다. */
+  showRivals?: boolean;
 };
+
+const NO_RIVALS: Territory = {};
 
 // 타일이 늦게 오거나 끝내 오지 않아도 영토는 이 시간 뒤에 드러납니다.
 const READY_FALLBACK_MS = 1200;
@@ -39,7 +44,8 @@ const drawHandlers = {
   add: (event: LeafletEvent) => { (event.target as Path).getElement()?.setAttribute('pathLength', '1'); },
 };
 
-export default function TerritoryMap({ cells, fresh, route, label, className = '', onReady }: Props) {
+export default function TerritoryMap({ cells, fresh, route, label, className = '', onReady, showRivals = false }: Props) {
+  const rivals = useRivalTerritory();
   const [ready, setReady] = useState(false);
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
@@ -66,7 +72,8 @@ export default function TerritoryMap({ cells, fresh, route, label, className = '
       <FitToContent points={points} />
       <MapTiles onLoad={markReady} />
       {route && route.length > 1 && <Polyline positions={route} className="wr-route is-draw" interactive={false} eventHandlers={drawHandlers} />}
-      <TerritoryLayer cells={cells} fresh={fresh} stagger />
+      {showRivals && <RivalLoader />}
+      <TerritoryLayer cells={cells} fresh={fresh} stagger rivals={showRivals ? rivals : NO_RIVALS} />
     </MapContainer>
   </div>;
 }

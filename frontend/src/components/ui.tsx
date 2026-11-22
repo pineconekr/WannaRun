@@ -22,7 +22,7 @@ export function TerritoryRules() {
   return <ol className="wr-rules" aria-label="땅따먹기 방법">
     <li><strong>달리기</strong>GPS 러닝을 시작하고 평소처럼 달려요.</li>
     <li><strong>차지하기</strong>지나간 길 주변의 육각형 칸이 내 땅이 돼요.</li>
-    <li><strong>넓히기</strong>새로운 길로 달릴수록 영토가 넓어져요.</li>
+    <li><strong>빼앗기</strong>다른 러너의 칸을 지나가면 내 땅이 돼요. 내 칸도 빼앗길 수 있어요.</li>
   </ol>;
 }
 

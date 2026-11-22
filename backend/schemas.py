@@ -126,9 +126,32 @@ class LeaderboardResponse(BaseModel):
 
 
 class TerritoryResponse(BaseModel):
+    """지금 내가 가진 칸. lost는 지나갔지만 지금은 내 것이 아닌 칸 수입니다."""
+
     resolution: int
     total: int
     cells: list[str]
+    lost: int = 0
+
+
+class TerritoryAreaResponse(BaseModel):
+    """지도 영역 안의 칸. 다른 러너의 칸은 주인을 밝히지 않습니다. truncated면 일부만 담았습니다."""
+
+    resolution: int
+    mine: list[str]
+    others: list[str]
+    truncated: bool
+
+
+class TerritoryLeaderboardEntry(BaseModel):
+    rank: int
+    user_id: str
+    username: str
+    cells: int
+
+
+class TerritoryLeaderboardResponse(BaseModel):
+    entries: list[TerritoryLeaderboardEntry]
 
 
 class ActivityArea(BaseModel):

@@ -6,6 +6,7 @@ Neon:         DATABASE_URL 설정 후 uv run python -m backend.seed_demo --yes
 데모 러너는 아래 DEMO_RUNNERS 아이디로만 만들고 지웁니다. 다른 계정은 건드리지 않습니다.
 다시 실행하면 데모 러너의 기록만 오늘 기준으로 새로 만듭니다(중복 없음).
 기록은 source='gps'라서 랭킹·개인 통계에 실제 기록처럼 집계됩니다.
+데모 러너의 러닝도 영토 칸을 차지하므로, 실제 사용자의 칸을 빼앗을 수 있습니다.
 운영 DB에 넣으면 실제 사용자 랭킹에 섞이므로 Neon 시연용 브랜치를 권장합니다.
 """
 
@@ -20,7 +21,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from backend.auth import password_hasher
-from backend.models import AuthSession, Run, TerritoryCell, User
+from backend.models import AuthSession, Run, TerritoryCell, TerritoryOwner, User
 from backend.territory import claim_run
 
 # (아이디, 평균 페이스 초/km, 러닝 횟수, 평소 거리 km)
@@ -111,6 +112,7 @@ def seed(engine: Engine, password: str | None = None, now: datetime | None = Non
                 db.flush()
             elif password:
                 user.password_hash = password_hasher.hash(password)
+            db.execute(delete(TerritoryOwner).where(TerritoryOwner.user_id == user.id))
             db.execute(delete(TerritoryCell).where(TerritoryCell.user_id == user.id))
             db.execute(delete(Run).where(Run.user_id == user.id))
 
@@ -130,6 +132,7 @@ def remove(engine: Engine) -> int:
     with Session(engine) as db, db.begin():
         ids = list(db.scalars(select(User.id).where(User.username.in_(DEMO_USERNAMES))))
         if ids:
+            db.execute(delete(TerritoryOwner).where(TerritoryOwner.user_id.in_(ids)))
             db.execute(delete(TerritoryCell).where(TerritoryCell.user_id.in_(ids)))
             db.execute(delete(Run).where(Run.user_id.in_(ids)))
             db.execute(delete(AuthSession).where(AuthSession.user_id.in_(ids)))

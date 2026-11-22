@@ -13,7 +13,7 @@ import { HAPTIC, buzz } from '../services/haptics';
 import { nativeTracking, previewLocation, watchLocation, type LocationPosition } from '../services/location';
 import { MAX_ACCURACY_M, RunningSession, createRoutePlayer, distanceBetween, type RunResult } from '../services/tracking';
 import { clock, pace } from '../services/runRecords';
-import { cellsAlong, claimTerritory, useTerritory, type Claim, type Territory } from '../services/territory';
+import { cellsAlong, claimTerritory, useRivalTerritory, useTerritory, type Claim, type Territory } from '../services/territory';
 import { CUSTOM_DEMO_ROUTE_EVENT, readCustomDemoRoute, saveCustomDemoRoute } from '../services/customDemoRoute';
 import { SUYEONG_A_ROUND_TRIP } from '../services/suyeongACourse';
 export type { RunResult } from '../services/tracking';
@@ -74,6 +74,7 @@ export default function MapScreen({ onFinish, autoStart = false, onAutoStarted, 
   const [liveCells, setLiveCells] = useState<Territory>(NO_CELLS);
   const [chase, setChase] = useState<Chase | null>(null);
   const territory = useTerritory();
+  const rivals = useRivalTerritory();
   const [, render] = useState(0);
   const session = useRef<RunningSession | null>(null);
   const cleanup = useRef<(() => void) | null>(null);
@@ -103,6 +104,7 @@ export default function MapScreen({ onFinish, autoStart = false, onAutoStarted, 
   const liveFresh = useMemo(() => Object.keys(liveCells).filter(key => !(key in territory)), [liveCells, territory]);
   const mapCells = useMemo(() => active ? { ...territory, ...liveCells } : territory, [active, territory, liveCells]);
   const freshCount = active ? liveFresh.length : 0;
+  const liveStolen = useMemo(() => liveFresh.filter(key => key in rivals).length, [liveFresh, rivals]);
 
   function draw() { render(value => value + 1); }
 
@@ -403,7 +405,8 @@ export default function MapScreen({ onFinish, autoStart = false, onAutoStarted, 
   const livePace = currentSpeed >= MIN_PACE_SPEED_MPS ? pace({ distanceMeters: currentSpeed, durationSeconds: 1 }) : '—';
   const here = active && position.current ? Object.keys(cellsAlong([[position.current]]))[0] : null;
   const liveLabel = phase === 'paused' ? '일시정지' : searching ? '위치 찾는 중'
-    : here && here in territory ? '내 땅 위를 달리는 중' : '새 땅 개척 중';
+    : here && here in territory ? '내 땅 위를 달리는 중'
+    : here && here in rivals ? '다른 러너의 땅을 빼앗는 중' : '새 땅 개척 중';
   const nowFor = run?.source === 'demo' ? () => simulatedClock.current : Date.now;
   const mapPosition = active ? position.current ?? (searching && preview.kind === 'fix' ? preview.position : null)
     : preview.kind === 'fix' ? preview.position : null;
@@ -425,6 +428,7 @@ export default function MapScreen({ onFinish, autoStart = false, onAutoStarted, 
         <div><dt>현재 페이스</dt><dd>{livePace}<small>/km</small></dd></div>
         <div className="wr-live-claim"><dt>새 영토</dt>
           <dd key={liveFresh.length} className={liveFresh.length ? 'is-up' : 'is-zero'}>+{liveFresh.length.toLocaleString('ko-KR')}<small>칸</small></dd>
+          {liveStolen > 0 && <dd className="wr-live-stolen">빼앗음 {liveStolen.toLocaleString('ko-KR')}</dd>}
         </div>
       </dl>
       {chase && <div className="wr-chase">

@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 
 from backend.auth import CurrentSession, Db
-from backend.models import Run, User
-from backend.schemas import LeaderboardResponse, Period
+from backend.models import Run, TerritoryOwner, User
+from backend.schemas import LeaderboardResponse, Period, TerritoryLeaderboardResponse
 
 router = APIRouter(prefix="/api/leaderboard", tags=["랭킹"])
 
@@ -79,3 +79,19 @@ def get_leaderboard(
         )
     ).mappings().all()
     return {"period": period, "entries": entries}
+
+
+@router.get("/territory", response_model=TerritoryLeaderboardResponse)
+def get_territory_leaderboard(db: Db, session: CurrentSession):
+    """지금 가진 칸 수 순위. 기간이 없습니다(빼앗기면 바로 줄어듭니다)."""
+    totals = (
+        select(User.id.label("user_id"), User.username, func.count(TerritoryOwner.cell_id).label("cells"))
+        .join(TerritoryOwner, TerritoryOwner.user_id == User.id)
+        .group_by(User.id, User.username)
+        .subquery()
+    )
+    ranked = select(func.rank().over(order_by=totals.c.cells.desc()).label("rank"), totals).subquery()
+    entries = db.execute(
+        select(ranked).order_by(ranked.c.rank, ranked.c.username, ranked.c.user_id)
+    ).mappings().all()
+    return {"entries": entries}

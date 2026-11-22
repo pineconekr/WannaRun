@@ -2,7 +2,7 @@ import { beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  cellsAlong, claimTerritory, clearLocalTerritory, enterAccountMode, enterGuestMode, setAccountCells,
+  cellsAlong, claimTerritory, clearLocalTerritory, enterAccountMode, enterGuestMode, replaceRivalArea, setAccountCells,
   type Position,
 } from '../src/services/territory.ts';
 
@@ -107,4 +107,44 @@ test('account mode hides guest territory, shows the server cells and never touch
   // 로그아웃하면 게스트 영토로 돌아옵니다.
   enterGuestMode();
   assert.equal(claimTerritory([]).total, JSON.parse(guestStored!).length);
+});
+
+const wholeArea = { south: 35.16, west: 129.12, north: 35.18, east: 129.14 };
+
+test('running over a rival cell reports it as stolen and takes it off the rival layer', () => {
+  enterAccountMode();
+  setAccountCells([]);
+  const rivalCells = Object.keys(cellsAlong([eastward]));
+  replaceRivalArea(wholeArea, rivalCells);
+  const claim = claimTerritory([extended]);
+  const overlap = Object.keys(cellsAlong([extended])).filter(id => rivalCells.includes(id));
+  assert.ok(overlap.length > 0);
+  assert.deepEqual(claim.stolen, overlap);
+  assert.ok(claim.stolen.every(id => claim.added.includes(id)));
+  // 다시 같은 칸을 지나가면 이미 내 칸이라 빼앗은 칸이 없습니다.
+  assert.deepEqual(claimTerritory([extended]).stolen, []);
+});
+
+test('guests never see rivals, and a new area replaces only the cells inside it', () => {
+  replaceRivalArea(wholeArea, Object.keys(cellsAlong([eastward])));
+  assert.deepEqual(claimTerritory([eastward]).stolen, []);
+
+  enterAccountMode();
+  setAccountCells([]);
+  const rivalCells = Object.keys(cellsAlong([eastward]));
+  replaceRivalArea(wholeArea, rivalCells);
+  // 다른 곳(영역 밖)을 새로 받아도 기존 칸은 남고, 같은 영역을 빈 결과로 받으면 사라집니다.
+  replaceRivalArea({ south: 35.0, west: 129.0, north: 35.1, east: 129.1 }, []);
+  assert.equal(claimTerritory([eastward]).stolen.length, rivalCells.length);
+  setAccountCells([]);
+  replaceRivalArea(wholeArea, []);
+  assert.deepEqual(claimTerritory([eastward]).stolen, []);
+});
+
+test('server cells win over rival cells that turned out to be mine', () => {
+  enterAccountMode();
+  const mine = Object.keys(cellsAlong([eastward]));
+  replaceRivalArea(wholeArea, mine);
+  setAccountCells(mine, 3);
+  assert.deepEqual(claimTerritory([eastward]).stolen, []);
 });
