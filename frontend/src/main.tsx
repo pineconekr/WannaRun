@@ -12,6 +12,8 @@ import "./styles/home.css";
 import "./styles/run.css";
 import "./styles/result.css";
 import "./styles/records.css";
+import "./styles/dark-mint.css";
+import "./styles/playful.css";
 import App from "./App";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

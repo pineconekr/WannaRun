@@ -1,3 +1,5 @@
+import ProfileSetupScreen from './ProfileSetupScreen';
+import { loadProfile, saveProfile, emptyProfile, type RunnerProfile } from '../services/profile';
 import React, { useEffect, useMemo, useState } from 'react';
 import AuthScreen from './AuthScreen';
 import { useAuth } from '../components/AuthProvider';
@@ -165,6 +167,17 @@ export default function ProfileScreen() {
   const [statsError, setStatsError] = useState('');
   const [attempt, setAttempt] = useState(0);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [profile, setProfile] = useState<RunnerProfile | null>(null);
+  const [profileError, setProfileError] = useState('');
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [settingUpProfile, setSettingUpProfile] = useState(false);
+  useEffect(() => {
+    setProfile(null); setProfileError(''); setEditingProfile(false);
+    if (!user) return;
+    try { setProfile(loadProfile(user.id)); }
+    catch { setProfileError('이 브라우저의 프로필을 불러오지 못했어요.'); }
+  }, [user?.id]);
+
   const territory = useTerritory();
   const cellCount = Object.keys(territory).length;
 
@@ -202,10 +215,17 @@ export default function ProfileScreen() {
       <button type="button" className="wr-primary-button" onClick={retry}>다시 시도</button>
     </section>;
     return <>
-      <div className="wr-page wr-profile wr-guest-territory"><TerritorySection territory={territory} account={false} /></div>
-      <AuthScreen />
+      <div hidden={settingUpProfile} className="wr-page wr-profile wr-guest-territory"><TerritorySection territory={territory} account={false} /></div>
+      <AuthScreen onSetupChange={setSettingUpProfile} />
     </>;
   }
+  if (editingProfile) return <ProfileSetupScreen key={user.id} editing initial={profile ?? { ...emptyProfile, nickname: user.username }} error={profileError}
+    onBack={() => { setEditingProfile(false); setProfileError(''); }}
+    onSave={value => {
+      try { saveProfile(user.id, value); setProfile(value); setProfileError(''); setEditingProfile(false); }
+      catch { setProfileError('프로필을 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.'); }
+    }} />;
+  const displayName = profile?.anonymous ? '익명의 러너' : profile?.nickname || user.username;
   const runs = stats?.run_count ?? 0;
   const tagline = cellCount > 0 || runs > 0
     ? `영토 ${cellCount.toLocaleString('ko-KR')}칸 · GPS 러닝 ${runs.toLocaleString('ko-KR')}회`
@@ -213,12 +233,20 @@ export default function ProfileScreen() {
   return <section className="wr-account wr-page wr-profile" aria-labelledby="profile-title">
     <h1 id="profile-title">내 프로필</h1>
     <div className="wr-profile-card">
-      <div className="wr-avatar" aria-hidden="true">{user.username.slice(0, 1).toUpperCase()}</div>
+      <div className="wr-avatar" aria-hidden="true">{profile?.anonymous ? '?' : Array.from(displayName)[0]?.toUpperCase()}</div>
       <div>
-        <h2>{user.username}</h2>
+        <h2>{displayName}</h2>
         <p className="wr-muted">{tagline}</p>
       </div>
     </div>
+    <button type="button" className="wr-secondary-button" onClick={() => setEditingProfile(true)} style={{ marginTop: 16 }}>프로필 설정</button>
+    {profileError && <p className="wr-error" role="alert">{profileError}</p>}
+    {profile && !profile.hideSpecs && <dl className="wr-profile-specs">
+      <div><dt>생년월일</dt><dd>{profile.birthday || '미입력'}</dd></div>
+      <div><dt>키</dt><dd>{profile.height ? `${profile.height} cm` : '미입력'}</dd></div>
+      <div><dt>몸무게</dt><dd>{profile.weight ? `${profile.weight} kg` : '미입력'}</dd></div>
+    </dl>}
+    {profile && <p className="wr-muted">프로필은 이 브라우저에만 저장돼요. 랭킹에는 기존 계정 아이디가 표시돼요.</p>}
     <TerritorySection territory={territory} account />
     <section aria-labelledby="personal-stats-title">
       <h2 id="personal-stats-title" className="wr-section-title">나의 누적 러닝</h2>

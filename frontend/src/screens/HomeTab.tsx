@@ -1,4 +1,5 @@
 // 홈: 이번 주 현황판. 이번 주 거리, 앞 순위까지 남은 거리, 최근 러닝, 내 영토를 보여줍니다.
+import RunSticker from '../components/RunSticker';
 import React, { forwardRef, useEffect, useState } from 'react';
 import { useAuth } from '../components/AuthProvider';
 import TerritoryMap from '../components/map/TerritoryMap';
@@ -174,13 +175,17 @@ const HomeTab = forwardRef<HTMLElement, Props>(function HomeTab({ runStatus, onS
     : 'GPS로 달린 거리만 이번 주 랭킹에 쌓여요.';
 
   return <section className="wr-week" aria-labelledby="week-title">
-    <h1 id="week-title">{headline(week, cellCount)}</h1>
-    <p className="wr-description">{description}</p>
+    <div className="wr-home-greeting"><span>LET’S GO, RUNNER!</span><span aria-hidden="true">✦</span></div>
+    <div className="wr-home-hero">
+      <div className="wr-hero-topline"><span className="wr-club-tag">MY LITTLE RUN CLUB</span><span className="wr-hero-note">나만의 페이스로</span></div>
+      <div className="wr-hero-heading"><h1 id="week-title">{headline(week, cellCount)}</h1><RunSticker /></div>
+      <p className="wr-description">{description}</p>
 
     <button className="wr-primary-button wr-start-button" type="button" onClick={onStart}>
       {startLabel}
       <PlayIcon />
     </button>
+    </div>
 
     <section className="wr-week-section" aria-labelledby="race-title">
       <div className="wr-week-heading">

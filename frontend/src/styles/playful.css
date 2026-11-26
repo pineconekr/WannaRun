@@ -1,0 +1,181 @@
+/* Little Run Club: presentation only. Mint, ink, and existing semantic colors. */
+.wr-home {
+  --wr-radius: 30px;
+  --wr-radius-control: 20px;
+  --wr-card-shadow: 0 5px 0 var(--wr-border);
+  --wr-soft-shadow: 0 12px 28px rgb(0 0 0 / .22);
+  line-height: 1.75;
+}
+.wr-home .wr-header { padding: max(22px, env(safe-area-inset-top)) 24px 18px; }
+.wr-home .wr-logo { font-size: 33px; letter-spacing: -.5px; }
+.wr-home .wr-hud { min-height: 44px; border: 1px solid var(--wr-claim-ink); transform: rotate(3deg); box-shadow: 0 3px 0 var(--wr-claim-tint); }
+.wr-home .wr-main { padding: 10px 20px 38px; }
+.wr-home :is(.wr-page > h1, .wr-run-page > h1, .wr-account h1) {
+  position: relative; padding-right: 40px; margin: 10px 0 14px;
+  font-size: clamp(27px, 7vw, 32px); line-height: 1.4; font-weight: 800; letter-spacing: -.045em;
+}
+.wr-home :is(.wr-page > h1, .wr-run-page > h1, .wr-account h1)::after {
+  content: ''; position: absolute; right: 2px; top: 8px; width: 27px; height: 27px;
+  background: var(--wr-green); transform: rotate(12deg);
+  clip-path: polygon(50% 0, 61% 32%, 90% 12%, 72% 42%, 100% 50%, 72% 59%, 90% 88%, 60% 70%, 50% 100%, 39% 70%, 10% 88%, 29% 59%, 0 50%, 29% 41%, 10% 12%, 39% 31%);
+}
+.wr-home .wr-description { line-height: 1.85; font-size: 14px; }
+.wr-home .wr-muted { line-height: 1.7; }
+.wr-home .wr-section-title { margin: 32px 2px 12px; font-size: 20px; letter-spacing: -.03em; }
+.wr-home :is(.wr-primary-button, .wr-secondary-button, .wr-danger-button) {
+  min-height: 56px; padding: 14px 20px; border-radius: 20px; line-height: 1.5;
+  font-size: 15px; font-weight: 800; letter-spacing: -.02em;
+  transition: transform .16s var(--wr-ease), box-shadow .16s, background-color .16s;
+}
+.wr-home .wr-primary-button { box-shadow: 0 5px 0 #28735c; }
+.wr-home .wr-secondary-button { border-width: 1.5px; box-shadow: 0 3px 0 var(--wr-border); }
+.wr-home :is(.wr-primary-button, .wr-secondary-button, .wr-danger-button):enabled:active { transform: translateY(3px); box-shadow: none; }
+.wr-home .wr-start-button { min-height: 60px; border-radius: 20px; padding-inline: 22px; }
+.wr-home .wr-start-button svg { width: 30px; height: 30px; padding: 7px; border: 1.5px solid currentColor; border-radius: 50%; }
+.wr-home .wr-link-button { font-size: 13px; text-decoration: underline; text-underline-offset: 5px; }
+.wr-home :is(.wr-map-badge, .wr-self-label, .wr-best-chip) { border-radius: 10px; }
+.wr-home :is(.wr-notice, .wr-success, .wr-error) { padding: 18px; line-height: 1.8; border-radius: 22px; }
+
+/* Home hero: illustrated sticker, big headline, and one existing start action. */
+.wr-home-greeting { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 14px; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--wr-muted); }
+.wr-home-greeting > span:last-child { font-size: 22px; color: var(--wr-green); line-height: 1; }
+.wr-home-hero { padding: 22px; border: 1.5px solid var(--wr-green); border-radius: 32px 32px 12px 32px; background: var(--wr-surface); box-shadow: 0 6px 0 var(--wr-tint); }
+.wr-hero-topline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
+.wr-club-tag { padding: 5px 9px; border: 1px solid var(--wr-green); border-radius: 7px; color: var(--wr-green); font-size: 9px; font-weight: 800; letter-spacing: .7px; transform: rotate(-3deg); }
+.wr-hero-note { color: var(--wr-muted); font-size: 10px; }
+.wr-hero-heading { display: flex; align-items: center; gap: 6px; margin-top: 22px; }
+.wr-home .wr-hero-heading > h1 { flex: 1; min-width: 0; margin: 0; font-size: clamp(23px, 6.3vw, 28px); line-height: 1.5; letter-spacing: -.04em; font-weight: 800; text-wrap: balance; }
+.wr-home .wr-week-distance { font-size: 1.7em; }
+.wr-run-sticker { flex: none; width: 106px; height: auto; overflow: visible; color: var(--wr-green); }
+.wr-sticker-star { stroke: var(--wr-on-accent); }
+.wr-sticker-face { stroke: var(--wr-on-accent); }
+.wr-sticker-shoe { fill: var(--wr-ink); stroke: var(--wr-on-accent); }
+.wr-sticker-laces { stroke: var(--wr-on-accent); }
+.wr-sticker-orbit { opacity: .6; }
+.wr-home .wr-home-hero > .wr-description { margin: 16px 0 0; font-size: 13px; }
+.wr-home .wr-home-hero > .wr-start-button { margin-top: 20px; }
+.wr-home .wr-week-section { margin-top: 24px; padding: 22px; border: 1px solid var(--wr-border); border-radius: 28px; background: var(--wr-surface); box-shadow: var(--wr-card-shadow); }
+.wr-home .wr-week-section h2 { font-size: 19px; line-height: 1.5; letter-spacing: -.03em; }
+.wr-home .wr-week-heading { flex-wrap: wrap; gap: 0 10px; }
+.wr-home .wr-week-heading .wr-link-button { margin-left: auto; }
+.wr-home .wr-week-section > .wr-description { margin-top: 12px; }
+.wr-home .wr-week-section > .wr-secondary-button { margin-top: 20px; }
+.wr-home .wr-rules { gap: 16px; margin-top: 20px; }
+.wr-home .wr-rules li { grid-template-columns: 32px 1fr; gap: 2px 12px; font-size: 13px; line-height: 1.8; }
+.wr-home .wr-rules li::before { width: 32px; height: 32px; border-radius: 12px 12px 6px 12px; transform: rotate(-6deg); }
+.wr-home .wr-rules strong { font-size: 15px; }
+.wr-home .wr-week-map { height: 220px; margin-top: 20px; border-radius: 20px; }
+.wr-home .wr-recent { gap: 10px; border: 1px dashed var(--wr-field-border); border-radius: 18px; padding: 16px 12px; }
+.wr-home .wr-recent .wr-muted { margin-top: 6px; font-size: 12px; }
+.wr-home .wr-event-highlight { padding: 16px 0; margin-block: 16px; gap: 12px; border-block-style: dashed; }
+.wr-home .wr-event-dday { padding: 5px 8px; border: 1px solid var(--wr-green); border-radius: 10px; transform: rotate(4deg); font-size: 21px; }
+.wr-home .wr-course-link { padding: 14px 12px; border-radius: 20px; gap: 12px; }
+.wr-home .wr-course-link-wordmark { width: 62px; height: 62px; border-radius: 16px; transform: rotate(-5deg); }
+.wr-home .wr-course-link-wordmark strong { font-size: 15px; }
+.wr-home .wr-course-link-wordmark span { font-size: 7px; letter-spacing: .5px; }
+.wr-home .wr-course-link-copy strong { font-size: 14px; }
+.wr-home .wr-recommended-course { border-radius: 22px; box-shadow: none; }
+.wr-home :is(.wr-recommended-course-heading, .wr-recommended-course-footer) { padding: 18px; flex-wrap: wrap; }
+
+/* Compact dock; all five destinations and live-state indicators stay available. */
+.wr-home .wr-bottom-nav { width: calc(100% - 24px); margin-inline: 12px; bottom: 10px; padding: 7px 5px calc(7px + env(safe-area-inset-bottom, 0px)); border: 1.5px solid var(--wr-border); border-radius: 26px; box-shadow: var(--wr-soft-shadow); }
+.wr-home .wr-nav-item { min-height: 58px; border-radius: 20px; gap: 6px; font-size: 10px; }
+.wr-home .wr-nav-item.is-active { background: var(--wr-green); color: var(--wr-on-accent); }
+.wr-home .wr-nav-icon { width: 22px; height: 22px; }
+.wr-home .wr-nav-item.is-active:not(:active) .wr-nav-icon { transform: rotate(-8deg); }
+
+/* Map and live running views: rounded frames, unchanged geography and metrics. */
+.wr-home .wr-running-map { margin-top: 22px; }
+.wr-home .wr-map-card { border: 1px solid var(--wr-border); border-radius: 28px; box-shadow: var(--wr-card-shadow); }
+.wr-home .wr-map-toggle { border: 1px solid var(--wr-border); border-radius: 16px; }
+.wr-home .leaflet-bar { border: 1px solid var(--wr-border); border-radius: 18px; }
+.wr-home .wr-live { padding: 24px; border: 1px solid var(--wr-green); border-radius: 30px 30px 12px 30px; box-shadow: 0 5px 0 var(--wr-tint); }
+.wr-home .wr-live-status { font-size: 13px; }
+.wr-home .wr-live-stats { gap: 22px 10px; margin-top: 20px; }
+.wr-home .wr-live-stats dt { margin-bottom: 6px; }
+.wr-home .wr-live-message { line-height: 1.8; }
+.wr-home .wr-demo { margin-top: 24px; padding: 6px 16px 14px; border: 1px dashed var(--wr-field-border); border-radius: 22px; }
+.wr-home .wr-demo summary { min-height: 56px; gap: 12px; }
+.wr-home .wr-footnote { line-height: 1.8; }
+
+/* Records and rankings look like collectible running tickets. */
+.wr-home .wr-record-card { padding: 22px; margin-block: 18px; border: 1px solid var(--wr-border); border-radius: 26px 26px 12px 26px; box-shadow: var(--wr-card-shadow); }
+.wr-home .wr-record-head .wr-muted { margin-top: 6px; font-size: 12px; }
+.wr-home .wr-record-body { margin-top: 16px; padding-top: 20px; border-top: 1px dashed var(--wr-field-border); }
+.wr-home .wr-record-map { border-radius: 20px; }
+.wr-home .wr-filters { gap: 8px; margin: 24px 0 16px; }
+.wr-home .wr-filters button { min-height: 46px; padding: 10px 16px; border-radius: 15px; border-width: 1.5px; font-weight: 700; }
+.wr-home .wr-filters button[aria-pressed="true"] { box-shadow: 0 3px 0 #28735c; }
+.wr-home .wr-ranking-list { display: grid; gap: 12px; border: 0; }
+.wr-home .wr-ranking-item { border: 1px solid var(--wr-border); border-radius: 22px; background: var(--wr-surface); box-shadow: 0 3px 0 var(--wr-border); }
+.wr-home .wr-ranking-item + .wr-ranking-item { border-top: 1px solid var(--wr-border); }
+.wr-home .wr-ranking-row { padding: 18px 12px; border-radius: 21px; gap: 10px; }
+.wr-home .wr-rank-number { display: grid; place-items: center; min-height: 38px; border: 1px dashed var(--wr-field-border); border-radius: 12px; font-size: 24px; }
+.wr-home .wr-race .wr-ranking-row { grid-template-columns: 28px minmax(0,1fr) auto 8px; gap: 7px; padding: 14px 8px; }
+.wr-home .wr-race .wr-ranking-name strong { font-size: 13px; }
+.wr-home .wr-race .wr-rank-distance { font-size: 21px; }
+.wr-home .wr-runner-area { padding: 8px 14px 18px; }
+.wr-home :is(.wr-empty, .wr-gate) { margin-top: 24px; padding: 26px 22px; border: 1px dashed var(--wr-field-border); border-radius: 30px; background: var(--wr-surface); }
+.wr-home .wr-empty::before { content: ''; display: block; width: 46px; height: 40px; margin-bottom: 22px; border: 2px solid var(--wr-green); border-radius: 12px; transform: rotate(-7deg); background: repeating-linear-gradient(transparent 0 10px, var(--wr-tint) 10px 12px); }
+.wr-home .wr-result { margin-top: 24px; }
+.wr-home .wr-claim-copy { padding: 20px; border: 1px dashed var(--wr-claim-ink); border-radius: 24px; }
+.wr-home .wr-stats { gap: 20px 8px; padding: 20px 14px; border: 1px solid var(--wr-border); border-radius: 24px; background: var(--wr-surface); }
+.wr-home .wr-stats dt { margin-bottom: 6px; font-size: 12px; }
+.wr-home .wr-stats dd { font-variant-numeric: tabular-nums; line-height: 1.2; }
+.wr-home .wr-stat-distance { padding-bottom: 16px; border-bottom: 1px dashed var(--wr-border); }
+.wr-home .wr-speed-chart { padding: 20px 14px; border: 1px solid var(--wr-border); border-radius: 24px; background: var(--wr-surface); }
+
+/* Account, profile, and setup share soft forms and a member-card treatment. */
+.wr-home .wr-account { padding: 22px 24px 40px; }
+.wr-home .wr-main > .wr-account { padding: 0 0 28px; }
+.wr-home .wr-form { margin-top: 28px; }
+.wr-home .wr-form fieldset { gap: 10px; }
+.wr-home .wr-form label { margin-top: 14px; font-size: 14px; }
+.wr-home .wr-form input { min-height: 58px; padding: 14px 18px; border-radius: 18px; border-width: 1.5px; }
+.wr-home .wr-form textarea { min-height: 110px; padding: 16px 18px; border-radius: 18px; line-height: 1.8; }
+.wr-home .wr-form small { line-height: 1.8; }
+.wr-home .wr-profile-card { padding: 24px 20px; border: 1.5px solid var(--wr-green); border-radius: 30px 30px 12px 30px; background: var(--wr-surface); box-shadow: 0 5px 0 var(--wr-tint); }
+.wr-home .wr-avatar { width: 68px; height: 68px; border: 3px solid var(--wr-ink); border-radius: 24px; transform: rotate(-6deg); }
+.wr-home .wr-profile-card h2 { font-size: 21px; }
+.wr-home .wr-profile-stats { gap: 8px; }
+.wr-home .wr-profile-stats > div { padding: 18px 5px; gap: 8px; border: 1px solid var(--wr-border); border-radius: 22px; background: var(--wr-surface); }
+.wr-home .wr-profile-tabs { padding: 6px; gap: 6px; border-radius: 22px; }
+.wr-home .wr-profile-tabs button { border-radius: 16px; }
+.wr-home .wr-attendance { padding: 18px; border: 1px solid var(--wr-border); border-radius: 24px; background: var(--wr-surface); }
+.wr-home .wr-calendar-day { border-radius: 10px; }
+.wr-home .wr-badge-card { padding: 22px 10px; gap: 9px; border: 1px dashed var(--wr-field-border); border-radius: 24px; }
+.wr-home .wr-badge-icon { width: 44px; height: 44px; padding: 10px; border: 1px solid currentColor; border-radius: 16px; transform: rotate(-5deg); }
+.wr-home .wr-badge-card small { line-height: 1.7; }
+.wr-home .wr-setup-avatar { border-width: 2px; border-radius: 38% 46% 38% 44%; box-shadow: 5px 5px 0 var(--wr-green); transform: rotate(-5deg); }
+.wr-home .wr-setup-progress { gap: 10px; }
+.wr-home .wr-setup-progress li { border-radius: 5px; }
+.wr-home .wr-event-card { margin: 18px 0; padding: 22px; border: 1px solid var(--wr-border); border-radius: 26px; background: var(--wr-surface); box-shadow: var(--wr-card-shadow); }
+.wr-home .wr-event-card h2 { line-height: 1.5; }
+
+@media (max-width: 380px) {
+  .wr-home .wr-main { padding-inline: 16px; }
+  .wr-home .wr-header { padding-inline: 20px; }
+  .wr-home-hero { padding: 18px; }
+  .wr-hero-note { display: none; }
+  .wr-run-sticker { width: 82px; }
+  .wr-home .wr-hero-heading > h1 { font-size: 23px; }
+  .wr-home .wr-week-section { padding: 20px; }
+  .wr-home .wr-course-link-wordmark { width: 52px; height: 58px; }
+  .wr-home .wr-course-link-wordmark strong { font-size: 13px; }
+  .wr-home .wr-record-card { padding: 18px; }
+  .wr-home .wr-profile-card { gap: 12px; padding: 20px 16px; }
+  .wr-home .wr-live { padding: 22px 18px; }
+  .wr-home .wr-live-stats { column-gap: 8px; }
+  .wr-home .wr-live-stats > :not(.wr-live-distance) dd { font-size: 25px; }
+  .wr-home .wr-stats { padding-inline: 12px; }
+  .wr-home .wr-stats > :not(.wr-stat-distance) dd { font-size: 25px; }
+  .wr-home .wr-attendance { padding: 14px; }
+}
+@media (min-width: 600px) { .wr-home .wr-shell { border-inline: 1px solid var(--wr-border); } }
+@media (hover: hover) { .wr-home .wr-primary-button:enabled:hover { transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) {
+  .wr-home :is(.wr-primary-button, .wr-secondary-button, .wr-danger-button):enabled:active,
+  .wr-home .wr-primary-button:enabled:hover { transform: none; }
+}
+/* Custom switches keep their own hit area rather than text-input dimensions. */
+.wr-home .wr-form .wr-setup-switch input { min-height: 0; height: 32px; padding: 0; border: 0; }

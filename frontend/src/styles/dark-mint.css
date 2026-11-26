@@ -1,0 +1,76 @@
+/* Dark mint theme. Colors only; layout and application behavior stay unchanged. */
+.wr-home {
+  color-scheme: dark;
+  --wr-green: #62f5cd;
+  --wr-green-press: #38dcb1;
+  --wr-on-accent: #071b15;
+  --wr-ink: #f7faf9;
+  --wr-muted: #b4c1bc;
+  --wr-border: #2c3632;
+  --wr-field-border: #64766d;
+  --wr-axis: #9aaea3;
+  --wr-backdrop: #000;
+  --wr-canvas: #080b0a;
+  --wr-surface: #131a17;
+  --wr-sunk: #1c2621;
+  --wr-tint: #173b30;
+  --wr-map-ground: #18221d;
+  --wr-claim-ink: #ffae86;
+  --wr-claim-tint: #38241b;
+  --wr-rival-ink: #b9c2ff;
+  --wr-selection: #245e4b;
+  --wr-night: #0d1511;
+  --wr-night-raise: #1b2a22;
+  --wr-night-text: #f7faf9;
+  --wr-night-muted: #b4c1bc;
+  --wr-danger: #ffaaa3;
+  --wr-danger-tint: #38201f;
+  --wr-focus: #62f5cd;
+  scrollbar-color: var(--wr-field-border) var(--wr-canvas);
+}
+
+/* Bright mint requires dark lettering on filled buttons for readable contrast. */
+.wr-home :is(.wr-primary-button, .wr-avatar),
+.wr-home .wr-profile-tabs button.is-active,
+.wr-home .wr-filters button[aria-pressed="true"],
+.wr-home .wr-speed-chart .wr-unit-controls button[aria-pressed="true"] {
+  background: var(--wr-green);
+  border-color: var(--wr-green);
+  color: var(--wr-on-accent);
+}
+.wr-home .wr-primary-button:enabled:active { background: var(--wr-green-press); }
+.wr-home .wr-live .wr-secondary-button { border-color: var(--wr-field-border); }
+.wr-home .wr-live { border: 1px solid var(--wr-border); }
+.wr-home .wr-live .wr-primary-button:enabled:active { background: var(--wr-green-press); }
+.wr-home .wr-area-cluster { background: var(--wr-sunk); color: var(--wr-ink); }
+.wr-home .wr-stat-secondary,
+.wr-home .wr-speed-chart svg text { color: var(--wr-muted); fill: var(--wr-muted); }
+
+/* Map tiles retain their original geographic colors and attribution. */
+.wr-home .leaflet-bar a { background: var(--wr-surface); color: var(--wr-ink); }
+.wr-home .leaflet-bar a:hover { background: var(--wr-sunk); }
+.wr-home .leaflet-control-attribution { background: var(--wr-surface); color: var(--wr-muted); }
+.wr-home .leaflet-popup-content-wrapper,
+.wr-home .leaflet-popup-tip { background: var(--wr-surface); color: var(--wr-ink); }
+.wr-home .leaflet-container a.leaflet-popup-close-button { color: var(--wr-muted); }
+
+/* Course components previously used literal light-theme colors. */
+.wr-home .wr-course-link { background: var(--wr-sunk); border-color: var(--wr-border); color: var(--wr-ink); }
+.wr-home .wr-course-link:hover { border-color: var(--wr-green); }
+.wr-home .wr-course-link:focus-visible { outline-color: var(--wr-focus); }
+.wr-home .wr-course-link-wordmark { background: var(--wr-green); color: var(--wr-on-accent); }
+.wr-home .wr-course-link-wordmark span { color: var(--wr-on-accent); }
+.wr-home :is(.wr-course-link-copy small, .wr-course-link-arrow, .wr-course-back,
+  .wr-recommended-course-heading p) { color: var(--wr-green); }
+.wr-home .wr-recommended-course { border-color: var(--wr-border); background: var(--wr-surface); }
+.wr-home :is(.wr-recommended-course-heading > div > span,
+  .wr-recommended-course-footer > div > span, .wr-recommended-course > a) { color: var(--wr-muted); }
+.wr-home :is(.wr-course-tag, .wr-recommended-course-map) { background: var(--wr-tint); color: var(--wr-green); }
+.wr-home .wr-recommended-course-empty { background: var(--wr-sunk); color: var(--wr-muted); }
+.wr-home .wr-recommended-course-footer button { background: var(--wr-green); color: var(--wr-on-accent); }
+.wr-home .wr-recommended-course-footer button:disabled { background: var(--wr-sunk); color: var(--wr-muted); }
+
+/* Attendance levels remain distinct in the same mint family. */
+.wr-home :is(.wr-calendar-day.level-1, .wr-calendar-legend .level-1) { background: #244c3e; color: var(--wr-ink); }
+.wr-home :is(.wr-calendar-day.level-2, .wr-calendar-legend .level-2) { background: #387a62; color: var(--wr-ink); }
+.wr-home :is(.wr-calendar-day.level-3, .wr-calendar-legend .level-3) { background: var(--wr-green); color: var(--wr-on-accent); }

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../components/AuthProvider';
-import { authRequest } from '../services/auth';
+import ProfileSetupScreen from './ProfileSetupScreen';
+import { saveProfile, type RunnerProfile } from '../services/profile';
+import { authRequest, type User } from '../services/auth';
 import { TerritoryRules } from '../components/ui';
 
 type FieldErrors = { username?: string; password?: string; confirm?: string };
 
-export default function AuthScreen({ onGuest }: { onGuest?: () => void }) {
+export default function AuthScreen({ onGuest, onSetupChange }: { onGuest?: () => void; onSetupChange?: (active: boolean) => void }) {
   const { login } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [username, setUsername] = useState('');
@@ -16,6 +18,10 @@ export default function AuthScreen({ onGuest }: { onGuest?: () => void }) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState('');
   const signup = mode === 'signup';
+  const [profileStep, setProfileStep] = useState(false);
+  const [draft, setDraft] = useState<RunnerProfile>();
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  useEffect(() => { onSetupChange?.(profileStep); return () => onSetupChange?.(false); }, [profileStep, onSetupChange]);
 
   function validate(name: string): FieldErrors {
     const errors: FieldErrors = {};
@@ -36,20 +42,37 @@ export default function AuthScreen({ onGuest }: { onGuest?: () => void }) {
     setFieldErrors(errors);
     const firstInvalid = (['username', 'password', 'confirm'] as const).find(field => errors[field]);
     if (firstInvalid) { document.getElementById(`auth-${firstInvalid}`)?.focus(); return; }
+    if (signup) { setProfileStep(true); return; }
     setBusy(true);
-    try {
-      if (signup) {
-        await authRequest('/auth/signup', { method: 'POST', body: JSON.stringify({ username: name, password }) });
-        try { await login(name, password); }
-        catch {
-          // 가입은 됐으니 로그인 화면으로 넘겨 다시 시도하게 합니다.
-          setMode('login'); setPassword(''); setConfirm('');
-          setMessage('회원가입이 완료됐어요. 가입한 계정으로 로그인해 주세요.');
-        }
-      } else await login(name, password);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : '다시 시도해 주세요.'); }
+    try { await login(name, password); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : '다시 시도해 주세요.'); }
     finally { setBusy(false); }
   }
+
+  async function completeSignup(profile: RunnerProfile) {
+    if (busy) return;
+    setDraft(profile); setBusy(true); setError('');
+    try {
+      let id = createdId;
+      if (!id) {
+        const account = await authRequest<User>('/auth/signup', { method: 'POST', body: JSON.stringify({ username: username.trim(), password }) });
+        id = account.id; setCreatedId(id);
+      }
+      try { saveProfile(id, profile); }
+      catch { setError('계정은 생성됐지만 이 브라우저에 프로필을 저장하지 못했어요. 저장 공간을 확인한 뒤 다시 눌러 주세요. 계정을 다시 생성하지는 않아요.'); return; }
+      try { await login(username.trim(), password); }
+      catch {
+        setProfileStep(false); setMode('login'); setPassword(''); setConfirm(''); setCreatedId(null);
+        setMessage('가입과 이 브라우저의 프로필 저장이 완료됐어요. 가입한 계정으로 로그인해 주세요.');
+      }
+    } catch (reason) { setError(reason instanceof Error ? reason.message : '가입하지 못했어요. 다시 시도해 주세요.'); }
+    finally { setBusy(false); }
+  }
+  if (profileStep) return <ProfileSetupScreen initial={draft} busy={busy} error={error}
+    onSave={value => void completeSignup(value)} onBack={value => {
+      setDraft(value); setProfileStep(false); setError('');
+      if (createdId) { setMode('login'); setCreatedId(null); setPassword(''); setConfirm(''); setMessage('계정은 이미 생성됐어요. 로그인 후 프로필 설정에서 정보를 입력할 수 있어요.'); }
+    }} />;
 
   const describedBy = (...ids: (string | false)[]) => ids.filter(Boolean).join(' ') || undefined;
   const title = signup ? '함께 달려볼까요?' : onGuest ? '달린 길이 내 땅이 돼요' : '로그인하고 랭킹에 올라가요';
@@ -93,7 +116,7 @@ export default function AuthScreen({ onGuest }: { onGuest?: () => void }) {
         {error && <p className="wr-error" role="alert">{error}</p>}
         {message && <p className="wr-success" role="status">{message}</p>}
         <button className="wr-primary-button" type="submit">
-          {busy ? (signup ? '계정 만드는 중…' : '로그인 중…') : signup ? '회원가입' : '로그인'}
+          {busy ? (signup ? '계정 만드는 중…' : '로그인 중…') : signup ? '다음 · 프로필 설정' : '로그인'}
         </button>
       </fieldset>
     </form>
